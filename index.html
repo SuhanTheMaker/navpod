@@ -3,10 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#09090b">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>NavPod C6 | Bike Navigation Cockpit</title>
+  <meta name="theme-color" content="#121619">
+  <title>NavPod | 240x240 Smartwatch GPS Navigation & Simulator</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -16,95 +14,68 @@
       theme: {
         extend: {
           colors: {
-            zinc: {
-              850: '#1a1a20',
-              925: '#0f0f14',
-              950: '#09090b',
-            },
-            neon: {
-              emerald: '#10b981',
-              cyan: '#06b6d4',
-              accent: '#34d399',
+            brand: {
+              bg: '#121619',
+              card: '#161d22',
+              border: '#1f2930',
+              neon: '#00FF66',
+              neonMuted: '#00cc52',
+              eta: '#708A79',
+              radial: '#1b242a'
             }
           },
           fontFamily: {
-            mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
             sans: ['Montserrat', 'Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'Menlo', 'monospace']
           },
           boxShadow: {
-            'glow-emerald': '0 0 25px -3px rgba(16, 185, 129, 0.45)',
-            'glow-cyan': '0 0 25px -3px rgba(6, 182, 212, 0.45)',
-            'bezel': 'inset 0 2px 4px rgba(255, 255, 255, 0.15), inset 0 -4px 8px rgba(0, 0, 0, 0.8), 0 8px 24px rgba(0,0,0,0.7)',
+            'glow-neon': '0 0 25px -3px rgba(0, 255, 102, 0.45)',
+            'bezel': 'inset 0 3px 6px rgba(255, 255, 255, 0.12), inset 0 -5px 10px rgba(0, 0, 0, 0.85), 0 12px 32px rgba(0,0,0,0.85)'
           }
         }
       }
     }
   </script>
 
-  <!-- Leaflet CSS & JS (Using rock-solid Cloudflare CDN without restrictive SRI hashes) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-
-  <!-- Google Fonts: Montserrat, Inter & JetBrains Mono for Anti-Aliased Typography -->
+  <!-- Google Fonts: Montserrat & Inter for Smooth Anti-Aliased Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
-    /* Global Smooth Anti-Aliasing & Text Optimization */
     * {
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
-    }
-      overscroll-behavior-y: none;
-      -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
     input, textarea {
       user-select: text;
     }
+    html, body {
+      background-color: #0b0e10;
+      overscroll-behavior-y: none;
+    }
 
-    /* Reliable Leaflet Map Canvas styling */
-    #map-container {
-      position: relative;
-      height: 480px;
-      min-height: 420px;
-      width: 100%;
-    }
-    #map {
-      height: 100% !important;
-      width: 100% !important;
-      min-height: 420px !important;
-      background: #09090b !important;
-      border-radius: 1rem;
-      z-index: 1;
-    }
-    .leaflet-container {
-      background: #09090b !important;
-      font-family: inherit;
+    /* Custom Leaflet / Google Map Container */
+    #gmap-canvas {
       width: 100%;
       height: 100%;
-    }
-    .leaflet-control-zoom {
-      border: 1px solid #27272a !important;
-      border-radius: 8px !important;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
-    }
-    .leaflet-control-zoom a {
-      background-color: #18181b !important;
-      color: #34d399 !important;
-      border-color: #27272a !important;
-    }
-    .leaflet-control-zoom a:hover {
-      background-color: #27272a !important;
-      color: #6ee7b7 !important;
+      min-height: 440px;
+      background-color: #121619;
+      border-radius: 1rem;
     }
 
-    /* Custom tile filters for high contrast night mode */
-    .dark-invert-tiles {
-      filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.2) brightness(0.8) !important;
+    /* Outer Progress Ring Animation */
+    #progress-ring-circle {
+      transition: stroke-dashoffset 0.35s ease-out;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    /* Glass glare overlay on smartwatch */
+    .smartwatch-glass {
+      background: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.02) 42%, rgba(0,0,0,0.5) 100%);
     }
 
     /* Custom scrollbars */
@@ -113,175 +84,140 @@
       height: 5px;
     }
     ::-webkit-scrollbar-track {
-      background: #09090b;
+      background: #121619;
     }
     ::-webkit-scrollbar-thumb {
-      background: #27272a;
+      background: #1f2930;
       border-radius: 4px;
-    }
-
-    /* Pulsing user GPS dot */
-    .gps-marker-pulse {
-      position: relative;
-      width: 18px;
-      height: 18px;
-    }
-    .gps-marker-pulse::before {
-      content: '';
-      position: absolute;
-      top: -11px;
-      left: -11px;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: rgba(6, 182, 212, 0.4);
-      animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-    }
-    .gps-marker-pulse::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 18px;
-      height: 18px;
-      background: #22d3ee;
-      border: 2.5px solid #ffffff;
-      border-radius: 50%;
-      box-shadow: 0 0 12px rgba(6, 182, 212, 0.95);
-    }
-    @keyframes pulse-ring {
-      0% { transform: scale(0.3); opacity: 0.9; }
-      80%, 100% { transform: scale(1.6); opacity: 0; }
-    }
-
-    /* Display Bezel Glare */
-    .glass-glare {
-      background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.03) 45%, rgba(0,0,0,0.45) 100%);
-    }
-
-    /* GC9A01 Background */
-    .gc9a01-bg {
-      background: radial-gradient(circle at center, #0f172a 0%, #020617 75%, #000000 100%);
     }
   </style>
 </head>
 
-<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col font-sans antialiased overflow-x-hidden selection:bg-emerald-500 selection:text-black pb-10">
+<body class="bg-[#0b0e10] text-zinc-100 min-h-screen flex flex-col font-sans selection:bg-[#00FF66] selection:text-black pb-10">
 
   <!-- ============================================================ -->
-  <!-- 1. iOS WEBBLUETOOTH SHIELD NOTICE -->
+  <!-- TOP HEADER / NAV BAR -->
   <!-- ============================================================ -->
-  <div id="ios-shield-banner" class="bg-gradient-to-r from-cyan-950 via-zinc-900 to-emerald-950 border-b border-cyan-500/30 px-3 py-2 text-xs relative transition-all">
-    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2">
-        <span class="flex h-2 w-2 relative">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-        </span>
-        <span class="font-bold text-cyan-300">iOS Notice:</span>
-        <span class="text-zinc-300 hidden sm:inline">Apple Safari does not support Web Bluetooth. On iPhone/iPad, run this app inside</span>
-        <span class="text-zinc-300 sm:hidden">iPhone users: Open in</span>
-        <span class="font-bold text-white bg-cyan-900/60 px-1.5 py-0.5 rounded border border-cyan-400/30">Bluefy</span>
-        <span class="text-zinc-400 text-[11px]">or</span>
-        <span class="font-bold text-white bg-emerald-900/60 px-1.5 py-0.5 rounded border border-emerald-400/30">WebBLE</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <button onclick="toggleIosHelpModal()" class="text-cyan-400 hover:text-cyan-300 underline font-medium cursor-pointer text-[11px]">Guide</button>
-        <button onclick="document.getElementById('ios-shield-banner').style.display='none'" class="text-zinc-400 hover:text-zinc-200 p-0.5" title="Dismiss">&times;</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- iOS Help Modal -->
-  <div id="ios-help-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-zinc-900 border border-cyan-500/40 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-      <button onclick="toggleIosHelpModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl font-bold">&times;</button>
-      <div class="flex items-center gap-3 mb-4">
-        <div class="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-400">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-        </div>
-        <div>
-          <h3 class="text-base font-bold text-white">Apple iOS Bluetooth Setup</h3>
-          <p class="text-xs text-zinc-400">Web Bluetooth on iPhone & iPad</p>
-        </div>
-      </div>
-      <div class="space-y-3 text-xs text-zinc-300 leading-relaxed">
-        <p>Mobile Safari on iOS does not support the Web Bluetooth API natively.</p>
-        <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 space-y-2">
-          <p class="font-semibold text-emerald-400">Recommended Steps for iPhone:</p>
-          <ol class="list-decimal list-inside space-y-1 text-zinc-300">
-            <li>Install <strong class="text-white">Bluefy – Web BLE Browser</strong> from the App Store.</li>
-            <li>Paste this web dashboard's URL into Bluefy.</li>
-            <li>Tap <strong class="text-cyan-400">CONNECT BLE</strong> to pair with your ESP32-C6.</li>
-          </ol>
-        </div>
-        <p class="text-[11px] text-zinc-400">Android Chrome/Edge works out of the box with native Web Bluetooth.</p>
-      </div>
-      <button onclick="toggleIosHelpModal()" class="mt-5 w-full py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-black font-bold rounded-xl text-xs uppercase tracking-wider">
-        Close
-      </button>
-    </div>
-  </div>
-
-  <!-- ============================================================ -->
-  <!-- 2. TOP APP BAR & NAVIGATION CONTROLS -->
-  <!-- ============================================================ -->
-  <header class="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80 px-4 py-3">
+  <header class="sticky top-0 z-40 bg-[#121619]/90 backdrop-blur-md border-b border-[#1f2930] px-4 py-3">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
       
-      <!-- Brand & BLE Connection Status -->
+      <!-- Brand & BLE Tag -->
       <div class="flex items-center gap-3">
         <div class="relative">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 p-[1.5px] shadow-glow-emerald">
-            <div class="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center">
-              <svg class="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00FF66] to-cyan-500 p-[1.5px] shadow-glow-neon">
+            <div class="w-full h-full bg-[#121619] rounded-[14px] flex items-center justify-center">
+              <svg class="w-5 h-5 text-[#00FF66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v20m0 0l-5-5m5 5l5-5M2 12h20" />
               </svg>
             </div>
           </div>
-          <span id="ble-ping-dot" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-rose-500 border-2 border-zinc-950"></span>
+          <span id="ble-status-dot" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-rose-500 border-2 border-[#121619]"></span>
         </div>
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-1.5">
               <span>NavPod</span>
-              <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-cyan-400 border border-zinc-700">ESP32-C6 NAV</span>
+              <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-[#00FF66]/15 text-[#00FF66] border border-[#00FF66]/30 font-bold">240×240 UI</span>
             </h1>
           </div>
-          <p class="text-[11px] text-zinc-400 flex items-center gap-1.5">
-            <span id="ble-status-text" class="text-rose-400 font-mono font-medium">DISCONNECTED</span>
-            <span>•</span>
-            <span id="ble-protocol-tag" class="text-zinc-500 font-mono">NUS 6E400001</span>
+          <p class="text-[11px] text-zinc-400 flex items-center gap-1.5 font-mono">
+            <span id="ble-status-label" class="text-rose-400 font-bold">DISCONNECTED</span>
+            <span>&bull;</span>
+            <span id="active-routing-provider" class="text-zinc-500">Google Maps Routes</span>
           </p>
         </div>
       </div>
 
-      <!-- Action Buttons -->
+      <!-- Quick Actions (API Key, Chime, Connect BLE) -->
       <div class="flex items-center gap-2 flex-wrap">
-        <!-- Audio Turn Chime Toggle -->
-        <button id="toggle-audio-btn" onclick="toggleAudioChime()" title="Audio turn alert toggle" class="px-2.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-cyan-400 text-xs font-medium flex items-center gap-1.5 transition-colors">
-          <svg id="audio-icon-on" class="w-4 h-4 hidden text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
-          <svg id="audio-icon-off" class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
-          <span class="hidden sm:inline">Chime</span>
+        
+        <!-- Google Maps API Key Modal Trigger -->
+        <button 
+          onclick="toggleApiKeyModal()" 
+          title="Configure Google Maps API Key"
+          class="px-2.5 py-1.5 rounded-xl bg-[#161d22] border border-[#1f2930] hover:border-[#00FF66]/50 text-zinc-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors">
+          <span>⚙️ API Key</span>
         </button>
 
-        <!-- Simulated Bike Ride Toggle -->
-        <button id="sim-gps-btn" onclick="toggleSimulatedGps()" class="px-2.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white text-xs font-medium flex items-center gap-1.5 transition-colors">
-          <span class="w-2 h-2 rounded-full bg-zinc-600" id="sim-dot"></span>
-          <span>Sim Ride</span>
+        <!-- Turn Chime Toggle -->
+        <button 
+          id="audio-toggle-btn"
+          onclick="toggleAudioChime()" 
+          title="Turn alert sound chime"
+          class="px-2.5 py-1.5 rounded-xl bg-[#161d22] border border-[#1f2930] hover:border-[#00FF66]/50 text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-colors">
+          <span id="audio-icon-indicator" class="text-zinc-500">🔇 Muted</span>
         </button>
 
-        <!-- Main BLE Connect Button -->
-        <button id="ble-action-btn" onclick="handleBleToggle()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black text-xs font-bold font-mono tracking-wider flex items-center gap-2 shadow-glow-emerald transition-all active:scale-95 cursor-pointer">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.5 7.5l7 7m0-7l-7 7m7-7v14l-4-4m4-10l-4 4" />
+        <!-- BLE Connect Button -->
+        <button 
+          id="ble-connect-btn"
+          onclick="handleBleConnection()" 
+          class="px-4 py-1.5 rounded-xl bg-[#00FF66] hover:bg-[#00e65c] text-black text-xs font-extrabold font-sans tracking-wide flex items-center gap-2 shadow-glow-neon active:scale-95 transition-all cursor-pointer">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.5 7.5l7 7m0-7l-7 7m7-7v14l-4-4m4-10l-4 4" />
           </svg>
-          <span id="ble-action-label">CONNECT BLE</span>
+          <span id="ble-btn-text">CONNECT BLE</span>
         </button>
+
       </div>
 
     </div>
   </header>
+
+  <!-- ============================================================ -->
+  <!-- GOOGLE MAPS API KEY CONFIG MODAL -->
+  <!-- ============================================================ -->
+  <div id="api-key-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-[#121619] border border-[#1f2930] rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+      <button onclick="toggleApiKeyModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl font-bold">&times;</button>
+      
+      <div class="flex items-center gap-3 mb-4">
+        <div class="p-2.5 rounded-xl bg-[#00FF66]/15 text-[#00FF66]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">Google Maps API Configuration</h3>
+          <p class="text-xs text-zinc-400">Routes &amp; Directions Service Credentials</p>
+        </div>
+      </div>
+
+      <div class="space-y-4 text-xs text-zinc-300">
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5 font-mono">
+            Google Maps JavaScript API Key:
+          </label>
+          <input 
+            id="custom-api-key-input" 
+            type="text" 
+            value="AIzaSyC4ftTohLewruuuHhPLhhw92yAtRQkF5pw" 
+            placeholder="AIzaSy..." 
+            class="w-full bg-[#161d22] border border-[#1f2930] focus:border-[#00FF66] rounded-xl px-3 py-2.5 text-xs text-white font-mono focus:outline-none"
+          />
+          <p class="text-[11px] text-zinc-500 mt-1.5">
+            Key is stored in <code class="text-[#00FF66]">localStorage</code> on this device. If your key encounters HTTP referrer restrictions, you can toggle the dual-engine fallback anytime.
+          </p>
+        </div>
+
+        <div class="bg-[#161d22] p-3 rounded-xl border border-[#1f2930] space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white">Routing Engine Mode:</span>
+            <select id="engine-select" onchange="changeRoutingEngine(this.value)" class="bg-[#121619] border border-[#1f2930] text-[#00FF66] font-mono text-xs rounded-lg px-2.5 py-1 focus:outline-none">
+              <option value="google">Google Maps Routes API</option>
+              <option value="osrm">OSRM Open Source Engine (Backup)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-2">
+        <button onclick="saveAndReloadKey()" class="px-5 py-2.5 rounded-xl bg-[#00FF66] hover:bg-[#00e65c] text-black font-extrabold text-xs uppercase tracking-wider transition-all">
+          Save &amp; Apply
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ============================================================ -->
   <!-- MAIN COCKPIT GRID -->
@@ -289,299 +225,299 @@
   <main class="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-4 py-4 grid grid-cols-1 lg:grid-cols-12 gap-5">
 
     <!-- ============================================================ -->
-    <!-- LEFT COLUMN: ROUTING SEARCH, LIVE MAP & MANEUVER HUD -->
+    <!-- LEFT PANEL: GOOGLE MAP VIEW & REAL-TIME ROUTE PLANNER -->
     <!-- ============================================================ -->
     <section class="lg:col-span-7 flex flex-col gap-4">
 
-      <!-- SEARCH BAR & ROUTE CONTROLS -->
-      <div class="bg-zinc-900/90 border border-zinc-800/80 rounded-2xl p-3 sm:p-4 shadow-xl backdrop-blur-sm">
+      <!-- Route Search & Mode Selectors -->
+      <div class="bg-[#161d22] border border-[#1f2930] rounded-2xl p-3 sm:p-4 shadow-xl">
         <div class="flex items-center gap-2 mb-2">
           <div class="relative flex-1">
             <input 
-              id="search-input" 
+              id="dest-search-input" 
               type="text" 
-              placeholder="Search destination (street, landmark, city...)" 
-              class="w-full bg-zinc-950 border border-zinc-700/80 focus:border-cyan-400 rounded-xl px-3 py-2.5 pl-9 text-xs sm:text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-cyan-400 font-sans transition-all"
-              onkeydown="if(event.key==='Enter') executeSearch()"
+              placeholder="Enter destination (e.g., Central Park, Times Square...)" 
+              class="w-full bg-[#121619] border border-[#1f2930] focus:border-[#00FF66] rounded-xl px-3 py-2.5 pl-9 text-xs sm:text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none font-sans"
+              onkeydown="if(event.key==='Enter') executeRouteSearch()"
             />
             <svg class="w-4 h-4 text-zinc-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
-            <button id="clear-search-btn" onclick="clearSearchInput()" class="absolute right-2.5 top-2.5 text-zinc-500 hover:text-zinc-200 hidden text-base leading-none">&times;</button>
+            <button onclick="document.getElementById('dest-search-input').value=''" class="absolute right-3 top-2.5 text-zinc-500 hover:text-zinc-200">&times;</button>
           </div>
           <button 
-            onclick="executeSearch()" 
-            class="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-all shadow-sm">
-            <span>Find</span>
+            onclick="executeRouteSearch()" 
+            class="px-4 py-2.5 rounded-xl bg-[#00FF66] hover:bg-[#00e65c] text-black font-extrabold text-xs flex items-center gap-1.5 transition-all shadow-sm">
+            <span>Route</span>
           </button>
         </div>
 
-        <!-- Search Results Dropdown List -->
-        <div id="search-results-list" class="hidden bg-zinc-950 border border-zinc-800 rounded-xl mt-2 max-h-48 overflow-y-auto divide-y divide-zinc-800 text-xs"></div>
-
-        <!-- Live Destination & Route Quick Actions -->
-        <div class="flex flex-wrap items-center justify-between gap-2 mt-3 pt-2.5 border-t border-zinc-800/80 text-xs">
-          <div class="flex items-center gap-2">
-            <span class="text-zinc-400">Target:</span>
-            <span id="route-dest-name" class="font-bold text-emerald-400 truncate max-w-[200px] sm:max-w-xs">Tap map or search destination</span>
-          </div>
+        <!-- Mode & Waypoint Controls -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#1f2930] text-xs">
           <div class="flex items-center gap-1.5">
-            <button onclick="recalculateRoute()" class="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg text-[11px] font-medium transition-colors">
-              Recalculate
-            </button>
-            <button onclick="clearActiveRoute()" class="px-2.5 py-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800/50 text-rose-300 rounded-lg text-[11px] font-medium transition-colors">
-              Clear
-            </button>
+            <span class="text-zinc-400 font-mono">Mode:</span>
+            <button id="mode-bicycling" onclick="setTravelMode('BICYCLING')" class="px-2.5 py-1 rounded-lg bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]/40 font-bold text-[11px]">Bicycle</button>
+            <button id="mode-driving" onclick="setTravelMode('DRIVING')" class="px-2.5 py-1 rounded-lg bg-[#121619] text-zinc-400 border border-[#1f2930] text-[11px] hover:text-white">Drive</button>
+            <button id="mode-walking" onclick="setTravelMode('WALKING')" class="px-2.5 py-1 rounded-lg bg-[#121619] text-zinc-400 border border-[#1f2930] text-[11px] hover:text-white">Walk</button>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <button id="set-origin-btn" onclick="togglePinMode('start')" class="px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 hover:text-white text-[11px] font-medium">📍 Set Start</button>
+            <button id="set-dest-btn" onclick="togglePinMode('dest')" class="px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 hover:text-white text-[11px] font-medium">🏁 Set Dest</button>
+            <button onclick="clearCurrentRoute()" class="px-2 py-1 rounded-lg bg-rose-950/40 border border-rose-900/50 text-rose-300 hover:text-rose-200 text-[11px]">Clear</button>
           </div>
         </div>
       </div>
 
-      <!-- MAP CONTAINER WITH ESRI / TILE PROVIDER CONTROLS -->
-      <div class="relative bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl flex-1 min-h-[420px] sm:min-h-[480px]">
-        
-        <!-- Leaflet Map Canvas -->
-        <div id="map-container">
-          <div id="map"></div>
-        </div>
+      <!-- GOOGLE MAPS DESKTOP CANVAS -->
+      <div class="relative bg-[#161d22] border border-[#1f2930] rounded-2xl overflow-hidden shadow-2xl flex-1 min-h-[440px]">
+        <div id="gmap-canvas"></div>
 
-        <!-- Floating Telemetry Pills (Speed, Heading, GPS accuracy) -->
+        <!-- Floating Telemetry HUD (Speed, Remaining Distance, ETA) -->
         <div class="absolute top-3 left-3 z-10 flex flex-wrap gap-2 pointer-events-none">
-          <div class="bg-zinc-950/90 backdrop-blur-md border border-zinc-800 px-3 py-1.5 rounded-xl text-center pointer-events-auto shadow-lg">
-            <div class="text-[9px] uppercase font-mono text-zinc-400">Bike Speed</div>
-            <div class="text-base font-black font-mono text-emerald-400 leading-none mt-0.5">
-              <span id="gps-speed-val">0.0</span> <span class="text-[10px] text-zinc-400 font-sans">km/h</span>
+          <div class="bg-[#121619]/90 backdrop-blur-md border border-[#1f2930] px-3 py-1.5 rounded-xl text-center pointer-events-auto shadow-lg">
+            <div class="text-[9px] uppercase font-mono text-zinc-400">Current Speed</div>
+            <div class="text-base font-black font-mono text-[#00FF66] leading-none mt-0.5">
+              <span id="hud-live-speed">0.0</span> <span class="text-[10px] text-zinc-400 font-sans">km/h</span>
             </div>
           </div>
-          <div class="bg-zinc-950/90 backdrop-blur-md border border-zinc-800 px-3 py-1.5 rounded-xl text-center pointer-events-auto shadow-lg">
-            <div class="text-[9px] uppercase font-mono text-zinc-400">Remaining</div>
-            <div class="text-base font-black font-mono text-cyan-400 leading-none mt-0.5">
-              <span id="route-total-dist">--</span>
+          <div class="bg-[#121619]/90 backdrop-blur-md border border-[#1f2930] px-3 py-1.5 rounded-xl text-center pointer-events-auto shadow-lg">
+            <div class="text-[9px] uppercase font-mono text-zinc-400">Remaining Trip</div>
+            <div class="text-base font-black font-mono text-white leading-none mt-0.5">
+              <span id="hud-total-dist">--</span>
             </div>
           </div>
-          <div class="bg-zinc-950/90 backdrop-blur-md border border-zinc-800 px-3 py-1.5 rounded-xl text-center pointer-events-auto shadow-lg">
-            <div class="text-[9px] uppercase font-mono text-zinc-400">ETA</div>
-            <div class="text-base font-black font-mono text-amber-400 leading-none mt-0.5">
-              <span id="route-total-time">--</span>
+          <div class="bg-[#121619]/90 backdrop-blur-md border border-[#1f2930] px-3 py-1.5 rounded-xl text-center pointer-events-auto shadow-lg">
+            <div class="text-[9px] uppercase font-mono text-zinc-400">Trip ETA</div>
+            <div class="text-base font-black font-mono text-[#00FF66] leading-none mt-0.5">
+              <span id="hud-total-eta">--</span>
             </div>
           </div>
         </div>
 
-        <!-- Tile Provider Switcher (Esri Dark Canvas / Esri Street / Satellite) -->
-        <div class="absolute top-3 right-3 z-10 flex items-center bg-zinc-950/90 backdrop-blur-md border border-zinc-800 rounded-xl p-1 gap-1 shadow-lg text-[10px] font-mono">
-          <button id="tile-btn-esri-dark" onclick="setTileService('esri_dark')" class="px-2.5 py-1 rounded-lg bg-cyan-950/90 text-cyan-400 border border-cyan-500/40 font-bold transition-all">
-            Dark Canvas
-          </button>
-          <button id="tile-btn-esri-street" onclick="setTileService('esri_street')" class="px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition-all">
-            Streets
-          </button>
-          <button id="tile-btn-satellite" onclick="setTileService('satellite')" class="px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition-all">
-            Satellite
-          </button>
-        </div>
-
-        <!-- Floating Recenter GPS button -->
+        <!-- Recenter GPS button -->
         <button 
-          onclick="centerMapOnUser()" 
-          title="Recenter on GPS Location"
-          class="absolute bottom-4 right-4 z-10 p-3 rounded-full bg-zinc-900/90 border border-cyan-500/40 text-cyan-400 hover:text-white hover:bg-cyan-950/80 shadow-glow-cyan backdrop-blur-md transition-all active:scale-95 cursor-pointer">
+          onclick="centerMapOnCurrentPosition()" 
+          title="Recenter Map"
+          class="absolute bottom-4 right-4 z-10 p-3 rounded-full bg-[#121619]/90 border border-[#00FF66]/40 text-[#00FF66] hover:text-white shadow-glow-neon backdrop-blur-md active:scale-95 transition-all">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="3"></circle>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v3m0 14v3M2 12h3m14 0h3"></path>
           </svg>
         </button>
 
-        <!-- Tap-on-map hint indicator -->
+        <!-- Tap instructions -->
         <div class="absolute bottom-4 left-4 z-10 pointer-events-none">
-          <span class="bg-zinc-950/80 backdrop-blur-md border border-zinc-800 text-zinc-300 text-[10px] px-2.5 py-1 rounded-full shadow">
-            Tip: Tap anywhere on map to route here
+          <span class="bg-[#121619]/80 backdrop-blur-md border border-[#1f2930] text-zinc-300 text-[10px] px-2.5 py-1 rounded-full shadow">
+            Click map to set route destinations
           </span>
         </div>
       </div>
 
-      <!-- NEXT MANEUVER BANNER (OSRM Dynamic Step) -->
-      <div class="bg-gradient-to-r from-zinc-900 via-zinc-925 to-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-lg">
-        <div class="flex items-center gap-3.5 min-w-0">
-          <div id="maneuver-icon-box" class="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-cyan-400 flex-shrink-0">
-            <!-- Default straight arrow -->
-            <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/>
-            </svg>
-          </div>
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <span id="next-step-distance" class="text-xl font-black font-mono text-emerald-400">---</span>
-              <span id="next-step-badge" class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">Ready</span>
-            </div>
-            <p id="next-step-street" class="text-xs sm:text-sm font-bold text-zinc-200 truncate max-w-xs sm:max-w-sm md:max-w-md">
-              Select or tap a destination to calculate route
-            </p>
-          </div>
+      <!-- Real-Time Simulator Navigation Player Controls -->
+      <div class="bg-[#161d22] border border-[#1f2930] rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+        <div class="flex items-center gap-2">
+          <button 
+            id="sim-play-btn" 
+            onclick="toggleRideSimulation()" 
+            class="px-3.5 py-2 rounded-xl bg-[#00FF66] hover:bg-[#00e65c] text-black font-extrabold text-xs flex items-center gap-1.5 transition-all shadow-glow-neon">
+            <svg id="sim-play-icon" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <span id="sim-play-label">Start Ride Simulation</span>
+          </button>
+          <button 
+            onclick="resetRideSimulation()" 
+            class="px-3 py-2 rounded-xl bg-[#121619] border border-[#1f2930] hover:text-white text-zinc-400 text-xs font-semibold transition-colors">
+            Reset
+          </button>
         </div>
-        <div class="text-right flex-shrink-0">
-          <div class="text-[10px] text-zinc-500 font-mono uppercase">Next Waypoint</div>
-          <div id="step-distance-counter" class="text-xs font-mono font-bold text-zinc-400 mt-0.5">&lt; 25m auto-advance</div>
+
+        <!-- Speed scrubber -->
+        <div class="flex items-center gap-1.5 font-mono text-xs">
+          <span class="text-zinc-400 text-[11px]">Speed:</span>
+          <button onclick="setSimMultiplier(1)" id="speed-1x" class="px-2 py-1 rounded-lg bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]/40 font-bold text-[11px]">1x</button>
+          <button onclick="setSimMultiplier(2)" id="speed-2x" class="px-2 py-1 rounded-lg bg-[#121619] text-zinc-400 border border-[#1f2930] text-[11px]">2x</button>
+          <button onclick="setSimMultiplier(5)" id="speed-5x" class="px-2 py-1 rounded-lg bg-[#121619] text-zinc-400 border border-[#1f2930] text-[11px]">5x</button>
+          <button onclick="setSimMultiplier(10)" id="speed-10x" class="px-2 py-1 rounded-lg bg-[#121619] text-zinc-400 border border-[#1f2930] text-[11px]">10x</button>
         </div>
       </div>
 
     </section>
 
     <!-- ============================================================ -->
-    <!-- RIGHT COLUMN: 240x240 GC9A01 COCKPIT MIRROR & TELEMETRY -->
+    <!-- RIGHT PANEL: 240x240 SMARTWATCH SHELL & HARDWARE SIMULATOR -->
     <!-- ============================================================ -->
-    <section class="lg:col-span-5 flex flex-col gap-4">
+    <section class="lg:col-span-5 flex flex-col gap-4 items-center">
 
-      <!-- ========================================================== -->
-      <!-- 2.1 GC9A01 240x240 COCKPIT SCREEN MIRROR (1:1 Ratio) -->
-      <!-- ========================================================== -->
-      <div class="bg-[#121619] border border-[#1e262c] rounded-2xl p-4 sm:p-5 flex flex-col items-center shadow-2xl relative overflow-hidden">
+      <!-- Smartwatch Exterior Container -->
+      <div class="w-full bg-[#161d22] border border-[#1f2930] rounded-2xl p-5 flex flex-col items-center shadow-2xl relative">
         
-        <!-- Header tag -->
+        <!-- Header -->
         <div class="w-full flex items-center justify-between mb-2 text-xs">
-          <div class="flex items-center gap-1.5 font-bold tracking-wider text-zinc-300">
+          <div class="flex items-center gap-1.5 font-bold tracking-wider text-zinc-300 font-sans">
             <span class="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse"></span>
-            <span>GC9A01 ROUND COCKPIT</span>
-            <span class="text-[10px] font-mono text-zinc-500">(240×240 1.28")</span>
+            <span>SMARTWATCH DISPLAY</span>
+            <span class="text-[10px] font-mono text-zinc-500">(240×240)</span>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-[#00ff66]/15 border border-[#00FF66]/40 text-[#00FF66] font-semibold">
-              LIVE UI
-            </span>
-          </div>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-[#00FF66]/15 border border-[#00FF66]/30 text-[#00FF66] font-bold">
+            LIVE SYNC
+          </span>
         </div>
 
-        <!-- 240x240 Circular Display Bezel Replica -->
-        <div class="relative p-2.5 rounded-full bg-gradient-to-b from-[#1c242a] via-[#101417] to-black shadow-bezel my-2">
+        <!-- 240x240 CIRCULAR SMARTWATCH BEZEL SHELL -->
+        <div class="relative p-2.5 rounded-full bg-gradient-to-b from-[#1c242a] via-[#101417] to-black shadow-bezel my-2 select-none">
           
-          <!-- Top Left Indicator: Bold neon green number (e.g. "6" or step sequence) -->
+          <!-- Top Left Indicator: Step Sequence Number (e.g., "6") -->
           <div class="absolute top-2.5 left-3.5 z-30 pointer-events-none select-none">
-            <span id="screen-step-number" class="text-[#00FF66] font-extrabold text-3xl font-sans drop-shadow-[0_0_8px_rgba(0,255,102,0.4)] leading-none">6</span>
+            <span id="watch-step-number" class="text-[#00FF66] font-extrabold text-3xl font-sans drop-shadow-[0_0_8px_rgba(0,255,102,0.4)] leading-none">6</span>
           </div>
 
-          <!-- The 240x240 Active Screen Area -->
+          <!-- THE 240x240 ACTIVE DISPLAY VIEW -->
           <div 
-            id="gc9a01-screen" 
-            class="w-[240px] h-[240px] rounded-full bg-[#121619] relative overflow-hidden flex flex-col items-center justify-center p-3 text-center select-none border border-[#1e262c]">
+            id="watch-display-screen" 
+            onmousedown="handleWatchTouchStart()" 
+            onmouseup="handleWatchTouchEnd()" 
+            ontouchstart="handleWatchTouchStart()" 
+            ontouchend="handleWatchTouchEnd()"
+            class="w-[240px] h-[240px] rounded-full bg-[#121619] relative overflow-hidden flex flex-col items-center justify-center p-3 text-center border border-[#1e262c] cursor-pointer">
             
-            <!-- Subtle Radial Compass Grid Lines & Neon Green Progress Inset Ring -->
+            <!-- Glass Glare Reflection Layer -->
+            <div class="absolute inset-0 rounded-full smartwatch-glass pointer-events-none z-20"></div>
+
+            <!-- SVG Background: Faint Radial Lines & DYNAMIC PROGRESS RING -->
             <svg class="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 240 240">
-              <!-- Faint 8-Axis Radial Compass Lines -->
+              <!-- Faint 8-Axis Radial Compass Grid Lines -->
               <g stroke="#1b242a" stroke-width="1.2">
                 <line x1="0" y1="120" x2="240" y2="120" />
                 <line x1="120" y1="0" x2="120" y2="240" />
                 <line x1="35" y1="35" x2="205" y2="205" />
                 <line x1="205" y1="35" x2="35" y2="205" />
               </g>
-              <!-- Vibrant Neon Green Progress Ring (#00FF66) -->
-              <circle cx="120" cy="120" r="95" fill="none" stroke="#00FF66" stroke-width="6.5" stroke-linecap="round" />
+
+              <!-- Track background circle (subtle dark ring) -->
+              <circle cx="120" cy="120" r="95" fill="none" stroke="#161e23" stroke-width="7" />
+
+              <!-- DYNAMIC OUTER NEON GREEN PROGRESS RING (#00FF66) -->
+              <!-- Circumference = 2 * PI * 95 = 596.9 -->
+              <circle 
+                id="progress-ring-circle" 
+                cx="120" 
+                cy="120" 
+                r="95" 
+                fill="none" 
+                stroke="#00FF66" 
+                stroke-width="7" 
+                stroke-linecap="round" 
+                stroke-dasharray="597" 
+                stroke-dashoffset="150" 
+              />
             </svg>
 
-            <!-- Center Content Hierarchy (Vertically Stacked & Centered) -->
-            <div class="relative z-10 flex flex-col items-center justify-center w-full px-4 text-center mt-1">
+            <!-- PRIMARY NAVIGATION CONTENT (CENTERED VERTICALLY) -->
+            <div id="watch-main-content" class="relative z-10 flex flex-col items-center justify-center w-full px-4 text-center mt-1 transition-opacity duration-300">
               
               <!-- 1. Top Icon: Bold, Clean White Vector Turn Arrow -->
-              <div id="screen-arrow-container" class="w-16 h-16 flex items-center justify-center mb-1">
-                <!-- Left Turn (Default in user mockup) -->
-                <svg id="screen-icon-left" class="w-14 h-14" viewBox="0 0 64 64" fill="none">
+              <div id="watch-arrow-box" class="w-16 h-16 flex items-center justify-center mb-1">
+                <!-- Turn Left (Default) -->
+                <svg id="turn-icon-left" class="w-14 h-14" viewBox="0 0 64 64" fill="none">
                   <path d="M42 52 V28 C42 20 36 14 28 14 H14" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M23 4 L11 14 L23 24" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
 
-                <!-- Right Turn -->
-                <svg id="screen-icon-right" class="w-14 h-14 hidden" viewBox="0 0 64 64" fill="none">
+                <!-- Turn Right -->
+                <svg id="turn-icon-right" class="w-14 h-14 hidden" viewBox="0 0 64 64" fill="none">
                   <path d="M22 52 V28 C22 20 28 14 36 14 H50" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M41 4 L53 14 L41 24" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
 
                 <!-- Straight -->
-                <svg id="screen-icon-straight" class="w-14 h-14 hidden" viewBox="0 0 64 64" fill="none">
+                <svg id="turn-icon-straight" class="w-14 h-14 hidden" viewBox="0 0 64 64" fill="none">
                   <path d="M32 52 V14" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round"/>
                   <path d="M19 26 L32 12 L45 26" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
 
                 <!-- U-Turn -->
-                <svg id="screen-icon-uturn" class="w-14 h-14 hidden" viewBox="0 0 64 64" fill="none">
+                <svg id="turn-icon-uturn" class="w-14 h-14 hidden" viewBox="0 0 64 64" fill="none">
                   <path d="M43 52 V26 C43 14 21 14 21 26 V48" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
                   <path d="M11 38 L21 48 L31 38" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
 
-                <!-- Arrived / Flag -->
-                <svg id="screen-icon-arrive" class="w-14 h-14 hidden" viewBox="0 0 64 64" fill="none">
+                <!-- Arrive / Destination -->
+                <svg id="turn-icon-arrive" class="w-14 h-14 hidden" viewBox="0 0 64 64" fill="none">
                   <path d="M18 54 V14" stroke="#FFFFFF" stroke-width="6.5" stroke-linecap="round"/>
                   <path d="M18 16 C30 11 36 21 50 16 V38 C36 43 30 33 18 38 Z" fill="#FFFFFF"/>
                 </svg>
               </div>
 
-              <!-- 2. Street Name: "PARK AVENUE" in uppercase bright green sans-serif -->
+              <!-- 2. Street Name: Uppercase bright green sans-serif text -->
               <div class="overflow-hidden w-[160px] mx-auto text-center">
-                <span id="screen-street-text" class="text-[#00FF66] font-semibold text-[13px] tracking-wider uppercase block truncate font-sans">
+                <span id="watch-street-name" class="text-[#00FF66] font-semibold text-[13px] tracking-wider uppercase block truncate font-sans">
                   PARK AVENUE
                 </span>
               </div>
 
-              <!-- 3. Distance: "350m" in large bold prominent green numbers -->
+              <!-- 3. Distance: Large bold prominent green numbers -->
               <div class="flex items-baseline justify-center text-[#00FF66] font-sans font-black leading-none mt-1">
-                <span id="screen-dist-num" class="text-4xl tracking-tight">350</span>
-                <span id="screen-dist-unit" class="text-xl font-bold ml-0.5">m</span>
+                <span id="watch-dist-val" class="text-4xl tracking-tight">350</span>
+                <span id="watch-dist-unit" class="text-xl font-bold ml-0.5">m</span>
               </div>
 
-              <!-- 4. ETA: "ETA 4:12 PM" in smaller, muted gray-green text -->
+              <!-- 4. ETA: Smaller muted gray-green text -->
               <div class="mt-1.5">
-                <span id="screen-eta-text" class="text-[#7d9987] font-medium text-[11px] tracking-wide font-sans">
+                <span id="watch-eta-val" class="text-[#708A79] font-medium text-[11px] tracking-wide font-sans">
                   ETA 4:12 PM
                 </span>
               </div>
 
             </div>
 
-            <!-- COMPREHENSIVE STATUS OVERLAY (Triggered by >800ms Press-and-Hold Touch Sensor) -->
+            <!-- SLEEK STATUS OVERLAY (PRESS & HOLD > 800MS TRIGGER) -->
             <div 
-              id="screen-status-overlay" 
-              class="absolute inset-0 z-40 bg-[#121619]/95 backdrop-blur-md rounded-full flex flex-col items-center justify-center p-4 text-center transition-all duration-300 opacity-0 pointer-events-none scale-90 select-none">
+              id="watch-status-overlay" 
+              class="absolute inset-0 z-40 bg-[#121619]/95 backdrop-blur-md rounded-full flex flex-col items-center justify-center p-4 text-center transition-all duration-300 opacity-0 pointer-events-none scale-90">
               
-              <!-- Dashed Neon Accent Ring -->
+              <!-- Dashed Accent Circle -->
               <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 240 240">
-                <circle cx="120" cy="120" r="95" fill="none" stroke="#00FF66" stroke-width="2.5" stroke-dasharray="8 5" opacity="0.8" />
+                <circle cx="120" cy="120" r="95" fill="none" stroke="#00FF66" stroke-width="2.5" stroke-dasharray="8 6" opacity="0.8" />
               </svg>
 
               <div class="relative z-10 space-y-2 w-full max-w-[176px]">
                 
-                <!-- Live Battery Percentage -->
-                <div class="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-black/60 border border-zinc-800">
-                  <span class="text-[10px] text-zinc-400 font-semibold font-sans">BATTERY</span>
+                <!-- Live Battery Indicator -->
+                <div class="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-black/60 border border-zinc-800 font-sans">
+                  <span class="text-[10px] text-zinc-400 font-semibold">BATTERY</span>
                   <div class="flex items-center gap-1.5 font-mono text-xs font-bold text-[#00FF66]">
                     <svg class="w-4 h-4 text-[#00FF66]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <rect x="2" y="7" width="16" height="10" rx="2" ry="2"></rect>
                       <line x1="20" y1="11" x2="20" y2="13"></line>
                       <rect x="5" y="9.5" width="8" height="5" fill="#00FF66" rx="0.5"></rect>
                     </svg>
-                    <span id="overlay-battery-val">78%</span>
+                    <span id="watch-battery-text">78%</span>
                   </div>
                 </div>
 
-                <!-- Bluetooth Connection Status -->
-                <div class="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-black/60 border border-zinc-800">
-                  <span class="text-[10px] text-zinc-400 font-semibold font-sans">BLUETOOTH</span>
-                  <div id="overlay-ble-status" class="flex items-center gap-1.5 font-mono text-[10px] font-bold text-rose-400">
-                    <span id="overlay-ble-dot" class="w-2 h-2 rounded-full bg-rose-500"></span>
-                    <span id="overlay-ble-label">DISCONNECTED</span>
+                <!-- Bluetooth Status Indicator -->
+                <div class="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-black/60 border border-zinc-800 font-sans">
+                  <span class="text-[10px] text-zinc-400 font-semibold">BLUETOOTH</span>
+                  <div id="watch-ble-box" class="flex items-center gap-1.5 font-mono text-[10px] font-bold text-rose-400">
+                    <span id="watch-ble-dot" class="w-2 h-2 rounded-full bg-rose-500"></span>
+                    <span id="watch-ble-label">OFFLINE</span>
                   </div>
                 </div>
 
-                <!-- Total Remaining Trip vs Turn Distance -->
+                <!-- Remaining Total Distance & Step Distance -->
                 <div class="px-2.5 py-1.5 rounded-xl bg-black/60 border border-zinc-800 text-left font-sans">
                   <div class="flex items-center justify-between text-[10px]">
-                    <span class="text-zinc-400 font-medium">TOTAL TRIP</span>
-                    <span id="overlay-trip-total" class="font-extrabold text-[#00FF66] font-mono">4.8 km</span>
+                    <span class="text-zinc-400 font-medium">TOTAL REMAIN</span>
+                    <span id="watch-total-remain" class="font-bold text-[#00FF66] font-mono">4.8 km</span>
                   </div>
                   <div class="flex items-center justify-between text-[10px] mt-0.5 pt-0.5 border-t border-zinc-800/80">
-                    <span class="text-zinc-400 font-medium">NEXT TURN</span>
-                    <span id="overlay-next-turn" class="font-extrabold text-white font-mono">350 m</span>
+                    <span class="text-zinc-400 font-medium">STEP REMAIN</span>
+                    <span id="watch-step-remain" class="font-bold text-white font-mono">350 m</span>
                   </div>
                 </div>
 
-                <!-- Dismiss hint -->
-                <div class="text-[9px] text-[#7d9987] font-semibold tracking-wider font-sans uppercase">
-                  HOLD &gt;800ms / TAP TO CLOSE
+                <div class="text-[9px] text-[#708A79] font-semibold tracking-wider font-sans uppercase">
+                  HOLD &gt;800ms / TAP TO RESUME
                 </div>
 
               </div>
@@ -590,126 +526,47 @@
           </div>
         </div>
 
-        <!-- Minimalist Caption -->
-        <div class="text-center mt-2">
-          <div class="text-[11px] font-bold text-zinc-300 tracking-wider uppercase font-sans">CLEAN FLAT</div>
-          <div class="text-[10px] text-zinc-500 uppercase font-semibold font-sans">&amp; ACCENTS</div>
+        <!-- Touch Hold Visual Bar Indicator -->
+        <div class="w-48 bg-[#121619] h-1.5 rounded-full overflow-hidden mt-1 border border-[#1f2930]">
+          <div id="touch-hold-progress" class="h-full bg-[#00FF66] w-0 transition-all duration-75"></div>
         </div>
 
-        <!-- Quick Interaction Buttons -->
+        <!-- Sensor Simulator & Action Triggers -->
         <div class="mt-3 flex items-center justify-center gap-2">
-          <!-- Hold Touch Sensor Simulator Button -->
+          <!-- Hold Sensor Button -->
           <button 
-            id="touch-sensor-btn"
-            onmousedown="startTouchHoldSim()" 
-            onmouseup="endTouchHoldSim()" 
-            ontouchstart="startTouchHoldSim()" 
-            ontouchend="endTouchHoldSim()" 
-            title="Press and hold for >800ms to test hardware touch sensor"
-            class="px-3.5 py-1.5 rounded-lg bg-zinc-800/90 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-xs font-sans font-bold flex items-center gap-1.5 transition-all select-none active:scale-95">
-            <span class="w-2 h-2 rounded-full bg-[#00FF66]" id="touch-hold-indicator"></span>
-            <span>Hold Sensor (&gt;800ms)</span>
+            id="touch-hold-btn"
+            onmousedown="handleWatchTouchStart()" 
+            onmouseup="handleWatchTouchEnd()" 
+            ontouchstart="handleWatchTouchStart()" 
+            ontouchend="handleWatchTouchEnd()" 
+            class="px-3.5 py-1.5 rounded-xl bg-[#121619] hover:bg-[#1a2329] border border-[#1f2930] hover:border-[#00FF66]/50 text-zinc-200 text-xs font-sans font-bold flex items-center gap-1.5 active:scale-95 transition-all">
+            <span class="w-2 h-2 rounded-full bg-[#00FF66]"></span>
+            <span>Hold Touch Sensor (&gt;800ms)</span>
           </button>
 
-          <!-- Sync Button -->
+          <!-- Sync BLE Packet Button -->
           <button 
-            onclick="pushCurrentNavPacket()" 
-            class="px-3 py-1.5 rounded-lg bg-[#00FF66]/10 hover:bg-[#00FF66]/20 border border-[#00FF66]/40 text-[#00FF66] font-mono text-xs font-bold transition-all">
-            Sync Packet
+            onclick="transmitCurrentBlePacket(true)" 
+            class="px-3 py-1.5 rounded-xl bg-[#00FF66]/10 hover:bg-[#00FF66]/20 border border-[#00FF66]/40 text-[#00FF66] text-xs font-mono font-bold transition-all">
+            Sync BLE
           </button>
         </div>
 
       </div>
 
-      <!-- ========================================================== -->
-      <!-- 2.2 BIKE TELEMETRY HUD -->
-      <!-- ========================================================== -->
-      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 shadow-xl backdrop-blur-sm">
-        <h2 class="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono mb-3 flex items-center justify-between">
-          <span>Live Ride Telemetry</span>
-          <span class="text-cyan-400">GPS Cockpit</span>
-        </h2>
-        <div class="grid grid-cols-3 gap-2 text-center font-mono">
-          <div class="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
-            <div class="text-[9px] text-zinc-500 uppercase">Speed</div>
-            <div id="hud-speed" class="text-lg font-black text-emerald-400">0.0 <span class="text-[10px] text-zinc-500">km/h</span></div>
-          </div>
-          <div class="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
-            <div class="text-[9px] text-zinc-500 uppercase">Heading</div>
-            <div id="hud-heading" class="text-lg font-black text-cyan-400">000°</div>
-          </div>
-          <div class="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
-            <div class="text-[9px] text-zinc-500 uppercase">Step Rem.</div>
-            <div id="hud-step-rem" class="text-lg font-black text-amber-400">---</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========================================================== -->
-      <!-- 2.3 MANUAL PACKET DEBUGGER & SIMULATOR -->
-      <!-- ========================================================== -->
-      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 shadow-xl backdrop-blur-sm">
-        <div class="flex items-center justify-between mb-2.5">
+      <!-- Real-Time BLE Transmission Log Console -->
+      <div class="w-full bg-[#161d22] border border-[#1f2930] rounded-2xl p-4 shadow-xl">
+        <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
-            <span class="text-emerald-400 font-mono font-bold text-sm">#</span>
-            <h2 class="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">Manual Turn Simulator</h2>
+            <span class="text-[#00FF66] font-mono font-bold text-xs">#</span>
+            <span class="text-xs font-bold text-white uppercase tracking-wider font-mono">Live BLE Stream Log</span>
           </div>
-          <button onclick="clearBleLog()" class="text-[10px] text-zinc-400 hover:text-white underline">
-            Clear Log
-          </button>
+          <button onclick="clearConsoleLog()" class="text-[10px] text-zinc-400 hover:text-white underline">Clear</button>
         </div>
-
-        <!-- Simulator Buttons (Left, Right, Straight, U-Turn, Arrive) -->
-        <div class="mb-3">
-          <div class="grid grid-cols-5 gap-1.5">
-            <button onclick="simulateTurn(0, '350m', 'Highway Road')" class="py-2 bg-zinc-800 hover:bg-emerald-950/60 border border-zinc-700 hover:border-emerald-500 rounded-lg text-xs font-mono font-bold text-zinc-200 transition-all">
-              Straight
-            </button>
-            <button onclick="simulateTurn(1, '150m', 'MG Road')" class="py-2 bg-zinc-800 hover:bg-cyan-950/60 border border-zinc-700 hover:border-cyan-500 rounded-lg text-xs font-mono font-bold text-zinc-200 transition-all">
-              Left
-            </button>
-            <button onclick="simulateTurn(2, '80m', 'Church Street')" class="py-2 bg-zinc-800 hover:bg-cyan-950/60 border border-zinc-700 hover:border-cyan-500 rounded-lg text-xs font-mono font-bold text-zinc-200 transition-all">
-              Right
-            </button>
-            <button onclick="simulateTurn(3, '40m', 'Ring Road U-Turn')" class="py-2 bg-zinc-800 hover:bg-amber-950/60 border border-zinc-700 hover:border-amber-500 rounded-lg text-xs font-mono font-bold text-zinc-200 transition-all">
-              U-Turn
-            </button>
-            <button onclick="simulateTurn(4, '0m', 'Destination Reached')" class="py-2 bg-zinc-800 hover:bg-emerald-950/60 border border-zinc-700 hover:border-emerald-500 rounded-lg text-xs font-mono font-bold text-zinc-200 transition-all">
-              Arrive
-            </button>
-          </div>
+        <div id="ble-log-stream" class="bg-[#121619] border border-[#1f2930] rounded-xl p-2.5 font-mono text-[11px] text-zinc-400 h-28 overflow-y-auto space-y-1 select-text">
+          <div class="text-zinc-600">[System] NavPod Google Maps simulator initialized.</div>
         </div>
-
-        <!-- Raw Packet Input -->
-        <div class="flex items-center gap-2 mb-3">
-          <input 
-            id="custom-ble-input" 
-            type="text" 
-            placeholder="Raw packet (e.g. 1|250m|MG Road)" 
-            class="flex-1 bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-100 font-mono placeholder-zinc-600 focus:outline-none focus:border-cyan-400"
-            onkeydown="if(event.key==='Enter') sendCustomPacket()"
-          />
-          <button 
-            onclick="sendCustomPacket()" 
-            class="px-3.5 py-1.5 bg-zinc-800 hover:bg-cyan-600 text-zinc-200 hover:text-white rounded-lg text-xs font-mono font-semibold transition-colors">
-            Send
-          </button>
-        </div>
-
-        <!-- Transmission Log Console -->
-        <div class="relative">
-          <div 
-            id="ble-log-console" 
-            class="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 font-mono text-[11px] text-zinc-400 h-32 overflow-y-auto space-y-1 select-text">
-            <div class="text-zinc-600">[System] NavPod C6 Cockpit loaded. BLE NUS Ready.</div>
-          </div>
-          <button 
-            onclick="copyBleLogs()" 
-            class="absolute top-2 right-2 px-2 py-0.5 rounded bg-zinc-800/80 hover:bg-zinc-700 text-[10px] text-zinc-300 border border-zinc-700">
-            Copy
-          </button>
-        </div>
-
       </div>
 
     </section>
@@ -717,85 +574,909 @@
   </main>
 
   <!-- ============================================================ -->
-  <!-- FOOTER -->
-  <!-- ============================================================ -->
-  <footer class="mt-auto border-t border-zinc-900 bg-zinc-950/60 py-3 px-4 text-center text-xs text-zinc-600 font-mono">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-      <div>
-        <span>NavPod C6 Bike Turn-by-Turn Navigation Cockpit</span> &bull; <span>GC9A01 240x240 Display</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="text-zinc-500">Service:</span>
-        <span class="text-zinc-400">NUS 6E400001 / Fallback 13370001</span>
-      </div>
-    </div>
-  </footer>
-
-  <!-- ============================================================ -->
-  <!-- JAVASCRIPT LOGIC & ENGINE -->
+  <!-- JAVASCRIPT LOGIC ENGINE -->
   <!-- ============================================================ -->
   <script>
     /**
      * ===============================================================
-     * NAVPOD C6 BIKE NAVIGATION ENGINE
-     * Esri Dark Maps + OSRM Biking Engine + Web Bluetooth NUS Protocol
+     * NAVPOD SMARTWATCH NAVIGATION ENGINE
+     * Google Maps Directions API + Live Route Simulator + Web BLE
      * ===============================================================
      */
 
-    // --- BLE UUID CONSTANTS ---
-    const NUS_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
-    const NUS_RX_CHAR_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"; // Mobile writes to ESP32
-    const NUS_TX_CHAR_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"; // ESP32 notifies mobile
+    const CONFIG = {
+      defaultApiKey: 'AIzaSyC4ftTohLewruuuHhPLhhw92yAtRQkF5pw',
+      nusServiceUuid: '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+      nusRxCharUuid:  '6e400002-b5a3-f393-e0a9-e50e24dcca9e',
+      nusTxCharUuid:  '6e400003-b5a3-f393-e0a9-e50e24dcca9e',
+    };
 
-    const FALLBACK_SERVICE_UUID = "13370001-8f20-4b61-a043-b11c97c12662";
-    const FALLBACK_CHAR_UUID    = "13370002-8f20-4b61-a043-b11c97c12662";
+    // Global State
+    const appState = {
+      apiKey: localStorage.getItem('google_maps_api_key') || CONFIG.defaultApiKey,
+      engine: localStorage.getItem('routing_engine_mode') || 'google',
+      travelMode: 'BICYCLING', // 'BICYCLING', 'DRIVING', 'WALKING'
+      pinMode: null, // 'start' or 'dest'
+      
+      // Coordinates
+      origin: { lat: 40.785091, lng: -73.968285 }, // Default: Central Park, NY
+      destination: { lat: 40.758896, lng: -73.985130 }, // Times Square, NY
 
-    // --- APP STATE ---
-    const state = {
+      // Google Maps objects
+      map: null,
+      directionsService: null,
+      directionsRenderer: null,
+      originMarker: null,
+      destMarker: null,
+      riderMarker: null,
+
+      // Navigation Route Steps & Path
+      routePathCoordinates: [],
+      steps: [],
+      currentStepIndex: 0,
+      totalDistanceMeters: 0,
+      totalDurationSeconds: 0,
+
+      // Simulator State
+      sim: {
+        isPlaying: false,
+        intervalId: null,
+        currentIndex: 0,
+        speedMultiplier: 1,
+        speedKmh: 20.0
+      },
+
+      // Touch Hold State
+      touch: {
+        startTime: 0,
+        timerId: null,
+        animFrameId: null,
+        isOverlayOpen: false
+      },
+
+      // BLE State
       ble: {
         device: null,
         server: null,
-        rxCharacteristic: null,
-        txCharacteristic: null,
+        rxChar: null,
+        txChar: null,
         isConnected: false,
-        reconnectAttempts: 0,
-        activeServiceType: null,
+        lastPacket: ''
       },
-      gps: {
-        latitude: 12.9716, // Default center (Bangalore center or browser location)
-        longitude: 77.5946,
-        speedKmh: 0,
-        heading: 0,
-        watchId: null,
-        isSimulating: false,
-        simInterval: null,
-        simIndex: 0,
-      },
-      navigation: {
-        destination: null, // { lat, lng, name }
-        routeGeoJSON: null,
-        steps: [],
-        currentStepIndex: 0,
-        totalDistanceMeters: 0,
-        totalDurationSeconds: 0,
-        lastSentPacket: "",
-        soundEnabled: false,
-      }
+
+      audioChimeEnabled: false
     };
 
-    // --- AUDIO CHIME SYNTHESIZER ---
-    let audioCtx = null;
-    function playTurnBeep(type = 'turn') {
-      if (!state.navigation.soundEnabled) return;
-      try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
+    // --- GOOGLE MAPS DARK THEME JSON ---
+    const GOOGLE_DARK_STYLES = [
+      { elementType: "geometry", stylers: [{ color: "#161d22" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#121619" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+      {
+        featureType: "administrative.locality",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+      },
+      {
+        featureType: "poi",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+      },
+      {
+        featureType: "poi.park",
+        elementType: "geometry",
+        stylers: [{ color: "#1b2923" }],
+      },
+      {
+        featureType: "poi.park",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#6b9a76" }],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [{ color: "#25313a" }],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#1a2329" }],
+      },
+      {
+        featureType: "road",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#9ca5b3" }],
+      },
+      {
+        featureType: "road.highway",
+        elementType: "geometry",
+        stylers: [{ color: "#2d3d49" }],
+      },
+      {
+        featureType: "road.highway",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#1f2a32" }],
+      },
+      {
+        featureType: "road.highway",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#f3d19c" }],
+      },
+      {
+        featureType: "water",
+        elementType: "geometry",
+        stylers: [{ color: "#0c1216" }],
+      },
+      {
+        featureType: "water",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#515c6d" }],
+      },
+      {
+        featureType: "water",
+        elementType: "labels.text.stroke",
+        stylers: [{ color: "#17263c" }],
+      },
+    ];
 
-        const now = audioCtx.currentTime;
+    // ===============================================================
+    // 1. DYNAMIC GOOGLE MAPS API INJECTION & INIT
+    // ===============================================================
+
+    function loadGoogleMapsScript() {
+      const existing = document.getElementById('gmaps-script');
+      if (existing) existing.remove();
+
+      const script = document.createElement('script');
+      script.id = 'gmaps-script';
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${appState.apiKey}&libraries=places,geometry&callback=initGoogleMapsApp`;
+      script.async = true;
+      script.defer = true;
+      script.onerror = () => {
+        logToConsole("Google Maps script failed to load. Check API Key or Network.", "ERR");
+        showFallbackPrompt();
+      };
+      window.gm_authFailure = () => {
+        logToConsole("Google Maps Authentication Failed (Invalid key or referrer block).", "ERR");
+        showFallbackPrompt();
+      };
+      document.head.appendChild(script);
+    }
+
+    function showFallbackPrompt() {
+      document.getElementById('active-routing-provider').innerText = "OSRM Fallback Active";
+      appState.engine = 'osrm';
+    }
+
+    window.initGoogleMapsApp = function() {
+      logToConsole("Google Maps JavaScript API loaded successfully.", "SYS");
+
+      const canvas = document.getElementById('gmap-canvas');
+      appState.map = new google.maps.Map(canvas, {
+        center: appState.origin,
+        zoom: 14,
+        styles: GOOGLE_DARK_STYLES,
+        disableDefaultUI: true,
+        zoomControl: true,
+      });
+
+      appState.directionsService = new google.maps.DirectionsService();
+      appState.directionsRenderer = new google.maps.DirectionsRenderer({
+        map: appState.map,
+        suppressMarkers: true,
+        polylineOptions: {
+          strokeColor: '#00FF66',
+          strokeWeight: 6,
+          strokeOpacity: 0.9,
+        }
+      });
+
+      // Markers
+      initMarkers();
+
+      // Click on map to set start or destination
+      appState.map.addListener('click', (e) => {
+        handleMapClick(e.latLng);
+      });
+
+      // Calculate initial demo route
+      calculateGoogleRoute();
+    };
+
+    function initMarkers() {
+      // Start Marker (Neon green circle)
+      appState.originMarker = new google.maps.Marker({
+        position: appState.origin,
+        map: appState.map,
+        title: "Start Location",
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 9,
+          fillColor: '#00FF66',
+          fillOpacity: 1,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 2.5,
+        }
+      });
+
+      // Destination Marker (Checkered / Flag pin)
+      appState.destMarker = new google.maps.Marker({
+        position: appState.destination,
+        map: appState.map,
+        title: "Destination",
+        icon: {
+          path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+          scale: 6,
+          fillColor: '#FF3366',
+          fillOpacity: 1,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 2,
+        }
+      });
+
+      // Live Rider / Simulated Position Marker
+      appState.riderMarker = new google.maps.Marker({
+        position: appState.origin,
+        map: appState.map,
+        title: "Live GPS Location",
+        zIndex: 999,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 11,
+          fillColor: '#00E5FF',
+          fillOpacity: 1,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 3,
+        }
+      });
+    }
+
+    // ===============================================================
+    // 2. GOOGLE MAPS DIRECTIONS ROUTING ENGINE
+    // ===============================================================
+
+    function calculateGoogleRoute() {
+      if (!appState.directionsService) {
+        // Fallback to OSRM if Google Maps service isn't ready
+        calculateOsrmFallbackRoute();
+        return;
+      }
+
+      logToConsole("Requesting Google Maps Directions...", "SYS");
+
+      const request = {
+        origin: appState.origin,
+        destination: appState.destination,
+        travelMode: google.maps.TravelMode[appState.travelMode] || google.maps.TravelMode.BICYCLING,
+      };
+
+      appState.directionsService.route(request, (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK) {
+          appState.directionsRenderer.setDirections(result);
+          parseGoogleRouteResult(result.routes[0]);
+          logToConsole("Google Maps route calculated successfully.", "SYS");
+        } else {
+          logToConsole(`Google Directions failed (${status}). Using OSRM fallback...`, "WARN");
+          calculateOsrmFallbackRoute();
+        }
+      });
+    }
+
+    function parseGoogleRouteResult(route) {
+      const leg = route.legs[0];
+      appState.totalDistanceMeters = leg.distance.value;
+      appState.totalDurationSeconds = leg.duration.value;
+
+      // Telemetry HUD updates
+      document.getElementById('hud-total-dist').innerText = leg.distance.text;
+      const etaFormatted = calculateEtaString(leg.duration.value);
+      document.getElementById('hud-total-eta').innerText = etaFormatted;
+
+      // Extract full polyline coordinates for smooth simulation
+      appState.routePathCoordinates = [];
+      route.overview_path.forEach(pt => {
+        appState.routePathCoordinates.push({ lat: pt.lat(), lng: pt.lng() });
+      });
+
+      // Parse Steps
+      appState.steps = leg.steps.map((step, idx) => {
+        const maneuver = step.maneuver || '';
+        const cleanInstruction = stripHtml(step.instructions);
+        const iconId = mapGoogleManeuverToIconId(maneuver, cleanInstruction, idx === leg.steps.length - 1);
+        return {
+          index: idx,
+          distanceMeters: step.distance.value,
+          distanceText: step.distance.text,
+          streetName: cleanInstruction,
+          iconId: iconId,
+          startLocation: { lat: step.start_location.lat(), lng: step.start_location.lng() },
+          endLocation: { lat: step.end_location.lat(), lng: step.end_location.lng() },
+        };
+      });
+
+      appState.currentStepIndex = 0;
+      updateActiveStepDisplay();
+      transmitCurrentBlePacket(true);
+    }
+
+    function mapGoogleManeuverToIconId(maneuver, instruction, isLast) {
+      if (isLast || instruction.toLowerCase().includes('destination')) return 4;
+      const m = maneuver.toLowerCase();
+      const ins = instruction.toLowerCase();
+      if (m.includes('uturn') || ins.includes('u-turn')) return 3;
+      if (m.includes('left') || ins.includes('left')) return 1;
+      if (m.includes('right') || ins.includes('right')) return 2;
+      return 0; // straight
+    }
+
+    function stripHtml(html) {
+      const tmp = document.createElement("DIV");
+      tmp.innerHTML = html;
+      let text = tmp.textContent || tmp.innerText || "";
+      // Strip common prefixes
+      text = text.replace(/Head (north|south|east|west) on/i, '')
+                 .replace(/Turn (left|right) onto/i, '')
+                 .replace(/Continue onto/i, '')
+                 .trim();
+      return text.length > 0 ? text : "Park Avenue";
+    }
+
+    // --- OSRM FALLBACK ROUTING ---
+    async function calculateOsrmFallbackRoute() {
+      const url = `https://router.project-osrm.org/route/v1/biking/${appState.origin.lng},${appState.origin.lat};${appState.destination.lng},${appState.destination.lat}?overview=full&geometries=geojson&steps=true`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.routes || data.routes.length === 0) return;
+        const route = data.routes[0];
+        const leg = route.legs[0];
+
+        appState.totalDistanceMeters = route.distance;
+        appState.totalDurationSeconds = route.duration;
+        document.getElementById('hud-total-dist').innerText = formatMeters(route.distance);
+        document.getElementById('hud-total-eta').innerText = calculateEtaString(route.duration);
+
+        // Coordinates
+        appState.routePathCoordinates = route.geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
+
+        appState.steps = leg.steps.map((step, idx) => {
+          let iconId = 0;
+          const mod = (step.maneuver && step.maneuver.modifier) ? step.maneuver.modifier.toLowerCase() : '';
+          if (idx === leg.steps.length - 1) iconId = 4;
+          else if (mod.includes('left')) iconId = 1;
+          else if (mod.includes('right')) iconId = 2;
+          else if (mod.includes('uturn')) iconId = 3;
+
+          return {
+            index: idx,
+            distanceMeters: step.distance,
+            distanceText: formatMeters(step.distance),
+            streetName: step.name || "Main Avenue",
+            iconId: iconId,
+            startLocation: { lat: step.maneuver.location[1], lng: step.maneuver.location[0] },
+          };
+        });
+
+        appState.currentStepIndex = 0;
+        updateActiveStepDisplay();
+        transmitCurrentBlePacket(true);
+        logToConsole("OSRM Fallback Route computed successfully.", "SYS");
+      } catch (e) {
+        logToConsole("Fallback routing failed: " + e.message, "ERR");
+      }
+    }
+
+    // ===============================================================
+    // 3. 240x240 SMARTWATCH SHELL & DYNAMIC PROGRESS RING
+    // ===============================================================
+
+    function updateActiveStepDisplay() {
+      if (!appState.steps || appState.steps.length === 0) return;
+      const step = appState.steps[appState.currentStepIndex];
+      if (!step) return;
+
+      const totalDist = appState.totalDistanceMeters || 1;
+      const progressFraction = Math.min(1, Math.max(0, 1 - (step.distanceMeters / totalDist)));
+      
+      updateWatchDisplay(
+        step.iconId,
+        step.distanceText,
+        step.streetName,
+        appState.currentStepIndex,
+        calculateEtaString(appState.totalDurationSeconds),
+        progressFraction
+      );
+    }
+
+    function updateWatchDisplay(iconId, distanceStr, streetName, stepIndex, etaStr, progressFraction = 0.35) {
+      // 1. Turn Arrow Icon
+      const icons = {
+        0: document.getElementById('turn-icon-straight'),
+        1: document.getElementById('turn-icon-left'),
+        2: document.getElementById('turn-icon-right'),
+        3: document.getElementById('turn-icon-uturn'),
+        4: document.getElementById('turn-icon-arrive'),
+      };
+      for (let k in icons) {
+        if (icons[k]) {
+          if (parseInt(k) === iconId) icons[k].classList.remove('hidden');
+          else icons[k].classList.add('hidden');
+        }
+      }
+
+      // 2. Street Name
+      const streetElem = document.getElementById('watch-street-name');
+      streetElem.innerText = (streetName || "PARK AVENUE").toUpperCase();
+
+      // 3. Distance Split (e.g. "350" + "m")
+      const distMatch = String(distanceStr).trim().match(/^([\d.]+)\s*([a-zA-Z]+)?$/);
+      if (distMatch) {
+        document.getElementById('watch-dist-val').innerText = distMatch[1];
+        document.getElementById('watch-dist-unit').innerText = distMatch[2] || 'm';
+      } else {
+        document.getElementById('watch-dist-val').innerText = distanceStr;
+        document.getElementById('watch-dist-unit').innerText = '';
+      }
+
+      // 4. ETA
+      document.getElementById('watch-eta-val').innerText = etaStr;
+
+      // 5. Step Number (Top-Left Indicator)
+      document.getElementById('watch-step-number').innerText = (stepIndex !== null && stepIndex !== undefined) ? (stepIndex + 1) : 6;
+
+      // 6. DYNAMIC OUTER NEON GREEN PROGRESS RING
+      // Circumference = 597
+      const circle = document.getElementById('progress-ring-circle');
+      if (circle) {
+        const offset = 597 - (597 * progressFraction);
+        circle.style.strokeDashoffset = offset;
+      }
+
+      // Update Overlay Values
+      document.getElementById('watch-step-remain').innerText = distanceStr;
+      document.getElementById('watch-total-remain').innerText = formatMeters(appState.totalDistanceMeters * (1 - progressFraction));
+    }
+
+    // ===============================================================
+    // 4. PRESS & HOLD (>800MS) TOUCH SENSOR SIMULATOR
+    // ===============================================================
+
+    function handleWatchTouchStart() {
+      if (appState.touch.isOverlayOpen) {
+        // Quick tap closes overlay
+        toggleWatchStatusOverlay(false);
+        return;
+      }
+
+      appState.touch.startTime = Date.now();
+      const progressBar = document.getElementById('touch-hold-progress');
+      progressBar.style.width = '0%';
+
+      // Animate progress bar across 800ms
+      const start = Date.now();
+      function animateBar() {
+        const elapsed = Date.now() - start;
+        const pct = Math.min(100, (elapsed / 800) * 100);
+        progressBar.style.width = `${pct}%`;
+        if (elapsed < 800) {
+          appState.touch.animFrameId = requestAnimationFrame(animateBar);
+        }
+      }
+      appState.touch.animFrameId = requestAnimationFrame(animateBar);
+
+      // Trigger after 800ms
+      appState.touch.timerId = setTimeout(() => {
+        toggleWatchStatusOverlay(true);
+        progressBar.style.width = '100%';
+        if (navigator.vibrate) navigator.vibrate(50);
+      }, 800);
+    }
+
+    function handleWatchTouchEnd() {
+      if (appState.touch.timerId) {
+        clearTimeout(appState.touch.timerId);
+        appState.touch.timerId = null;
+      }
+      if (appState.touch.animFrameId) {
+        cancelAnimationFrame(appState.touch.animFrameId);
+        appState.touch.animFrameId = null;
+      }
+      document.getElementById('touch-hold-progress').style.width = '0%';
+    }
+
+    function toggleWatchStatusOverlay(show) {
+      const overlay = document.getElementById('watch-status-overlay');
+      const mainContent = document.getElementById('watch-main-content');
+      appState.touch.isOverlayOpen = show;
+
+      if (show) {
+        overlay.classList.remove('opacity-0', 'pointer-events-none', 'scale-90');
+        overlay.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+        mainContent.classList.add('opacity-20');
+        logToConsole("Touch Sensor >800ms: Status Overlay Activated", "SYS");
+      } else {
+        overlay.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+        overlay.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
+        mainContent.classList.remove('opacity-20');
+      }
+    }
+
+    // ===============================================================
+    // 5. REAL-TIME NAVIGATION RIDE SIMULATOR
+    // ===============================================================
+
+    function toggleRideSimulation() {
+      if (appState.sim.isPlaying) {
+        pauseRideSimulation();
+      } else {
+        startRideSimulation();
+      }
+    }
+
+    function startRideSimulation() {
+      if (!appState.routePathCoordinates || appState.routePathCoordinates.length === 0) {
+        alert("Please set a valid route before starting the simulator!");
+        return;
+      }
+
+      appState.sim.isPlaying = true;
+      document.getElementById('sim-play-icon').innerHTML = `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`;
+      document.getElementById('sim-play-label').innerText = "Pause Simulation";
+
+      logToConsole("Navigation Simulator Started along Google Maps route.", "SYS");
+
+      const tickRateMs = Math.round(1000 / appState.sim.speedMultiplier);
+
+      appState.sim.intervalId = setInterval(() => {
+        if (!appState.sim.isPlaying) return;
+
+        if (appState.sim.currentIndex >= appState.routePathCoordinates.length - 1) {
+          logToConsole("Ride Completed! Destination Reached.", "SYS");
+          playTurnChime('arrived');
+          pauseRideSimulation();
+          updateWatchDisplay(4, "0m", "DESTINATION REACHED", appState.steps.length, "ARRIVED", 1.0);
+          return;
+        }
+
+        // Advance simulated position
+        appState.sim.currentIndex++;
+        const currentCoord = appState.routePathCoordinates[appState.sim.currentIndex];
+
+        // Move marker on Google Map
+        if (appState.riderMarker) {
+          appState.riderMarker.setPosition(currentCoord);
+        }
+
+        // Speed calculation
+        appState.sim.speedKmh = 19.5 + (Math.sin(appState.sim.currentIndex) * 3);
+        document.getElementById('hud-live-speed').innerText = appState.sim.speedKmh.toFixed(1);
+
+        // Check distance to next waypoint
+        checkWaypointProgress(currentCoord);
+
+      }, tickRateMs);
+    }
+
+    function pauseRideSimulation() {
+      appState.sim.isPlaying = false;
+      if (appState.sim.intervalId) {
+        clearInterval(appState.sim.intervalId);
+        appState.sim.intervalId = null;
+      }
+      document.getElementById('sim-play-icon').innerHTML = `<path d="M8 5v14l11-7z"/>`;
+      document.getElementById('sim-play-label').innerText = "Resume Simulation";
+    }
+
+    function resetRideSimulation() {
+      pauseRideSimulation();
+      appState.sim.currentIndex = 0;
+      appState.currentStepIndex = 0;
+      if (appState.riderMarker && appState.routePathCoordinates[0]) {
+        appState.riderMarker.setPosition(appState.routePathCoordinates[0]);
+      }
+      document.getElementById('sim-play-label').innerText = "Start Ride Simulation";
+      updateActiveStepDisplay();
+      logToConsole("Ride Simulation Reset to start.", "SYS");
+    }
+
+    function setSimMultiplier(mult) {
+      appState.sim.speedMultiplier = mult;
+      ['1x', '2x', '5x', '10x'].forEach(s => {
+        const btn = document.getElementById(`speed-${s}`);
+        if (!btn) return;
+        if (s === `${mult}x`) {
+          btn.className = "px-2 py-1 rounded-lg bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]/40 font-bold text-[11px]";
+        } else {
+          btn.className = "px-2 py-1 rounded-lg bg-[#121619] text-zinc-400 border border-[#1f2930] text-[11px]";
+        }
+      });
+
+      if (appState.sim.isPlaying) {
+        pauseRideSimulation();
+        startRideSimulation();
+      }
+    }
+
+    function checkWaypointProgress(currentCoord) {
+      if (!appState.steps || appState.steps.length === 0) return;
+      const step = appState.steps[appState.currentStepIndex];
+      if (!step) return;
+
+      const targetLoc = step.startLocation;
+      const distRemaining = haversineMeters(currentCoord.lat, currentCoord.lng, targetLoc.lat, targetLoc.lng);
+
+      // Total trip completion progress
+      const progressFraction = Math.min(1, appState.sim.currentIndex / appState.routePathCoordinates.length);
+
+      // Instant state transition when within < 25 meters of maneuver point
+      if (distRemaining < 25 && appState.currentStepIndex < appState.steps.length - 1) {
+        appState.currentStepIndex++;
+        const nextStep = appState.steps[appState.currentStepIndex];
+        logToConsole(`Waypoint Reached! Advancing to: ${nextStep.streetName}`, "SYS");
+        playTurnChime(nextStep.iconId === 4 ? 'arrived' : 'turn');
+        updateActiveStepDisplay();
+        transmitCurrentBlePacket(true);
+        return;
+      }
+
+      // Stream continuous decrementing distance
+      const formattedDist = formatMeters(distRemaining);
+      updateWatchDisplay(
+        step.iconId,
+        formattedDist,
+        step.streetName,
+        appState.currentStepIndex,
+        calculateEtaString(appState.totalDurationSeconds * (1 - progressFraction)),
+        progressFraction
+      );
+
+      // Stream to BLE every 500ms
+      throttledBleSend(step.iconId, formattedDist, step.streetName, appState.currentStepIndex);
+    }
+
+    // ===============================================================
+    // 6. WEB BLUETOOTH (NUS) TRANSMISSION
+    // ===============================================================
+
+    async function handleBleConnection() {
+      if (appState.ble.isConnected) {
+        disconnectBle();
+      } else {
+        await connectBle();
+      }
+    }
+
+    async function connectBle() {
+      if (!navigator.bluetooth) {
+        alert("Web Bluetooth is not supported on this browser. On iOS, use Bluefy or WebBLE.");
+        return;
+      }
+
+      try {
+        logToConsole("Scanning for ESP32 Bluetooth device...", "BLE");
+        const device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [CONFIG.nusServiceUuid, '13370001-8f20-4b61-a043-b11c97c12662', 'battery_service']
+        });
+
+        appState.ble.device = device;
+        logToConsole(`Discovered device: "${device.name || 'NavPod ESP32'}"`, "BLE");
+
+        const server = await device.gatt.connect();
+        appState.ble.server = server;
+
+        const service = await server.getPrimaryService(CONFIG.nusServiceUuid);
+        appState.ble.rxChar = await service.getCharacteristic(CONFIG.nusRxCharUuid);
+
+        appState.ble.isConnected = true;
+        updateBleUiState(true);
+        logToConsole("BLE Nordic UART Service Connected!", "BLE");
+
+        // Initial handshake packet
+        transmitCurrentBlePacket(true);
+
+      } catch (err) {
+        logToConsole(`BLE connection error: ${err.message}`, "ERR");
+        disconnectBle();
+      }
+    }
+
+    function disconnectBle() {
+      if (appState.ble.device && appState.ble.device.gatt.connected) {
+        appState.ble.device.gatt.disconnect();
+      }
+      appState.ble.isConnected = false;
+      appState.ble.rxChar = null;
+      updateBleUiState(false);
+      logToConsole("BLE Disconnected.", "WARN");
+    }
+
+    function updateBleUiState(connected) {
+      const dot = document.getElementById('ble-status-dot');
+      const label = document.getElementById('ble-status-label');
+      const btn = document.getElementById('ble-connect-btn');
+      const btnText = document.getElementById('ble-btn-text');
+
+      const watchDot = document.getElementById('watch-ble-dot');
+      const watchLabel = document.getElementById('watch-ble-label');
+      const watchBox = document.getElementById('watch-ble-box');
+
+      if (connected) {
+        dot.className = "absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#00FF66] border-2 border-[#121619] shadow-glow-neon";
+        label.innerText = "CONNECTED (NUS)";
+        label.className = "text-[#00FF66] font-bold";
+        btn.className = "px-4 py-1.5 rounded-xl bg-zinc-800 border border-rose-800 text-rose-400 text-xs font-extrabold font-sans";
+        btnText.innerText = "DISCONNECT";
+
+        watchDot.className = "w-2 h-2 rounded-full bg-[#00FF66] animate-pulse";
+        watchLabel.innerText = "CONNECTED";
+        watchBox.className = "flex items-center gap-1.5 font-mono text-[10px] font-bold text-[#00FF66]";
+      } else {
+        dot.className = "absolute -top-1 -right-1 w-3 h-3 rounded-full bg-rose-500 border-2 border-[#121619]";
+        label.innerText = "DISCONNECTED";
+        label.className = "text-rose-400 font-bold";
+        btn.className = "px-4 py-1.5 rounded-xl bg-[#00FF66] hover:bg-[#00e65c] text-black text-xs font-extrabold font-sans shadow-glow-neon";
+        btnText.innerText = "CONNECT BLE";
+
+        watchDot.className = "w-2 h-2 rounded-full bg-rose-500";
+        watchLabel.innerText = "OFFLINE";
+        watchBox.className = "flex items-center gap-1.5 font-mono text-[10px] font-bold text-rose-400";
+      }
+    }
+
+    let lastSentMs = 0;
+    function throttledBleSend(iconId, distanceStr, streetName, stepIndex) {
+      const now = Date.now();
+      if (now - lastSentMs > 500) {
+        lastSentMs = now;
+        const eta = calculateEtaString(appState.totalDurationSeconds);
+        const packet = `${iconId}|${distanceStr}|${streetName}|${stepIndex + 1}|${eta}`;
+        if (packet !== appState.ble.lastPacket) {
+          appState.ble.lastPacket = packet;
+          sendRawBleData(packet);
+        }
+      }
+    }
+
+    function transmitCurrentBlePacket(force = false) {
+      if (!appState.steps || appState.steps.length === 0) return;
+      const step = appState.steps[appState.currentStepIndex];
+      if (!step) return;
+
+      const eta = calculateEtaString(appState.totalDurationSeconds);
+      const packet = `${step.iconId}|${step.distanceText}|${step.streetName}|${appState.currentStepIndex + 1}|${eta}`;
+
+      if (force || packet !== appState.ble.lastPacket) {
+        appState.ble.lastPacket = packet;
+        sendRawBleData(packet);
+      }
+    }
+
+    async function sendRawBleData(packetString) {
+      logToConsole(`TX: "${packetString}"`, "TX");
+      if (!appState.ble.isConnected || !appState.ble.rxChar) return;
+      try {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(packetString + "\n");
+        if (appState.ble.rxChar.writeValueWithoutResponse) {
+          await appState.ble.rxChar.writeValueWithoutResponse(data);
+        } else {
+          await appState.ble.rxChar.writeValue(data);
+        }
+      } catch (err) {
+        logToConsole(`BLE Send failed: ${err.message}`, "ERR");
+      }
+    }
+
+    // ===============================================================
+    // 7. MAP INTERACTION HELPERS
+    // ===============================================================
+
+    function handleMapClick(latLng) {
+      const pos = { lat: latLng.lat(), lng: latLng.lng() };
+
+      if (appState.pinMode === 'start') {
+        appState.origin = pos;
+        if (appState.originMarker) appState.originMarker.setPosition(pos);
+        appState.pinMode = null;
+        document.getElementById('set-origin-btn').className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
+        calculateGoogleRoute();
+      } else {
+        // Default click sets destination
+        appState.destination = pos;
+        if (appState.destMarker) appState.destMarker.setPosition(pos);
+        appState.pinMode = null;
+        document.getElementById('set-dest-btn').className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
+        calculateGoogleRoute();
+      }
+    }
+
+    function togglePinMode(mode) {
+      appState.pinMode = (appState.pinMode === mode) ? null : mode;
+      const startBtn = document.getElementById('set-origin-btn');
+      const destBtn = document.getElementById('set-dest-btn');
+
+      if (appState.pinMode === 'start') {
+        startBtn.className = "px-2.5 py-1 rounded-lg bg-[#00FF66]/20 border border-[#00FF66] text-[#00FF66] text-[11px] font-bold";
+        destBtn.className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
+      } else if (appState.pinMode === 'dest') {
+        destBtn.className = "px-2.5 py-1 rounded-lg bg-rose-500/20 border border-rose-500 text-rose-400 text-[11px] font-bold";
+        startBtn.className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
+      } else {
+        startBtn.className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
+        destBtn.className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
+      }
+    }
+
+    function setTravelMode(mode) {
+      appState.travelMode = mode;
+      ['BICYCLING', 'DRIVING', 'WALKING'].forEach(m => {
+        const id = `mode-${m.toLowerCase()}`;
+        const btn = document.getElementById(id);
+        if (btn) {
+          if (m === mode) btn.className = "px-2.5 py-1 rounded-lg bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]/40 font-bold text-[11px]";
+          else btn.className = "px-2.5 py-1 rounded-lg bg-[#121619] text-zinc-400 border border-[#1f2930] text-[11px] hover:text-white";
+        }
+      });
+      calculateGoogleRoute();
+    }
+
+    function executeRouteSearch() {
+      const input = document.getElementById('dest-search-input');
+      const query = input.value.trim();
+      if (!query) return;
+
+      if (google && google.maps && google.maps.Geocoder) {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: query }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            const loc = results[0].geometry.location;
+            appState.destination = { lat: loc.lat(), lng: loc.lng() };
+            if (appState.destMarker) appState.destMarker.setPosition(loc);
+            if (appState.map) appState.map.panTo(loc);
+            calculateGoogleRoute();
+          } else {
+            alert("Location not found. Please try another query.");
+          }
+        });
+      }
+    }
+
+    function centerMapOnCurrentPosition() {
+      if (appState.map && appState.origin) {
+        appState.map.panTo(appState.origin);
+      }
+    }
+
+    function clearCurrentRoute() {
+      resetRideSimulation();
+      appState.steps = [];
+      appState.routePathCoordinates = [];
+      if (appState.directionsRenderer) {
+        appState.directionsRenderer.set('directions', null);
+      }
+      updateWatchDisplay(0, "---", "READY TO RIDE", 0, "ETA --:--", 0);
+      document.getElementById('hud-total-dist').innerText = "--";
+      document.getElementById('hud-total-eta').innerText = "--";
+      logToConsole("Route cleared.", "SYS");
+    }
+
+    // ===============================================================
+    // 8. AUDIO TURN CHIME & GENERAL UTILITIES
+    // ===============================================================
+
+    let audioContext = null;
+    function playTurnChime(type = 'turn') {
+      if (!appState.audioChimeEnabled) return;
+      try {
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === 'suspended') audioContext.resume();
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+
+        const now = audioContext.currentTime;
         if (type === 'turn') {
           osc.frequency.setValueAtTime(880, now);
           osc.frequency.exponentialRampToValueAtTime(1320, now + 0.15);
@@ -805,336 +1486,53 @@
           osc.stop(now + 0.25);
         } else if (type === 'arrived') {
           osc.frequency.setValueAtTime(523.25, now);
-          osc.frequency.setValueAtTime(659.25, now + 0.15);
-          osc.frequency.setValueAtTime(783.99, now + 0.3);
-          osc.frequency.setValueAtTime(1046.50, now + 0.45);
+          osc.frequency.setValueAtTime(783.99, now + 0.2);
+          osc.frequency.setValueAtTime(1046.50, now + 0.4);
           gain.gain.setValueAtTime(0.25, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
           osc.start(now);
-          osc.stop(now + 0.7);
+          osc.stop(now + 0.6);
         }
-      } catch (err) {
-        console.warn("Audio chime error:", err);
+      } catch (e) {
+        console.warn(e);
       }
     }
 
     function toggleAudioChime() {
-      state.navigation.soundEnabled = !state.navigation.soundEnabled;
-      const onIcon = document.getElementById('audio-icon-on');
-      const offIcon = document.getElementById('audio-icon-off');
-      if (state.navigation.soundEnabled) {
-        onIcon.classList.remove('hidden');
-        offIcon.classList.add('hidden');
-        logBle("Audio Turn Chimes Enabled", "SYS");
-        playTurnBeep('turn');
+      appState.audioChimeEnabled = !appState.audioChimeEnabled;
+      const ind = document.getElementById('audio-icon-indicator');
+      if (appState.audioChimeEnabled) {
+        ind.innerText = "🔔 Active";
+        ind.className = "text-[#00FF66] font-bold";
+        playTurnChime('turn');
       } else {
-        onIcon.classList.add('hidden');
-        offIcon.classList.remove('hidden');
-        logBle("Audio Turn Chimes Muted", "SYS");
+        ind.innerText = "🔇 Muted";
+        ind.className = "text-zinc-500";
       }
     }
 
-    // ===============================================================
-    // RELIABLE MAP TILE SERVICES (ESRI ARCGIS & OPENSTREETMAP)
-    // ===============================================================
-    let map = null;
-    let userMarker = null;
-    let destMarker = null;
-    let routeLayer = null;
-    let activeTileLayer = null;
-
-    /**
-     * Esri ArcGIS tile servers have open CORS, no API key required,
-     * work over file:// protocol, and never suffer 403 referrer blocks!
-     */
-    const TILE_SERVICES = {
-      esri_dark: {
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-        options: {
-          maxZoom: 16,
-          attribution: '&copy; Esri &copy; DeLorme, NAVTEQ'
-        }
-      },
-      esri_street: {
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-        options: {
-          maxZoom: 19,
-          className: 'dark-invert-tiles',
-          attribution: '&copy; Esri &copy; OpenStreetMap'
-        }
-      },
-      satellite: {
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        options: {
-          maxZoom: 19,
-          attribution: '&copy; Esri, Maxar, Earthstar Geographics'
-        }
-      }
-    };
-
-    function setTileService(type) {
-      if (!map || typeof L === 'undefined') return;
-
-      if (activeTileLayer) {
-        map.removeLayer(activeTileLayer);
-      }
-
-      const cfg = TILE_SERVICES[type] || TILE_SERVICES.esri_dark;
-      activeTileLayer = L.tileLayer(cfg.url, cfg.options);
-      activeTileLayer.addTo(map);
-
-      // Update button highlights
-      ['esri_dark', 'esri_street', 'satellite'].forEach(key => {
-        const btn = document.getElementById(`tile-btn-${key.replace('_', '-')}`);
-        if (!btn) return;
-        if (key === type) {
-          btn.className = "px-2.5 py-1 rounded-lg bg-cyan-950/90 text-cyan-400 border border-cyan-500/40 font-bold transition-all";
-        } else {
-          btn.className = "px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition-all";
-        }
-      });
+    function toggleApiKeyModal() {
+      const modal = document.getElementById('api-key-modal');
+      modal.classList.toggle('hidden');
     }
 
-    function initMap() {
-      if (typeof L === 'undefined') {
-        console.warn("Waiting for Leaflet to load...");
-        setTimeout(initMap, 200);
-        return;
-      }
-
-      try {
-        map = L.map('map', {
-          zoomControl: true,
-          attributionControl: false
-        }).setView([state.gps.latitude, state.gps.longitude], 15);
-
-        // Load Esri Dark Canvas
-        setTileService('esri_dark');
-
-        // Custom pulsing GPS user marker
-        const userIcon = L.divIcon({
-          className: 'gps-marker-pulse',
-          iconSize: [18, 18],
-          iconAnchor: [9, 9]
-        });
-
-        userMarker = L.marker([state.gps.latitude, state.gps.longitude], { icon: userIcon }).addTo(map);
-
-        // Map click handler to set route destination
-        map.on('click', (e) => {
-          handleDestinationSelected(e.latlng.lat, e.latlng.lng, `Location (${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)})`);
-        });
-
-        // Ensure Leaflet layout redraws cleanly
-        setTimeout(() => { if (map) map.invalidateSize(); }, 200);
-        setTimeout(() => { if (map) map.invalidateSize(); }, 700);
-        window.addEventListener('resize', () => { if (map) map.invalidateSize(); });
-
-        logBle("Esri Navigation Map initialized successfully.", "SYS");
-
-      } catch (err) {
-        console.error("Map initialization error:", err);
+    function saveAndReloadKey() {
+      const input = document.getElementById('custom-api-key-input');
+      const key = input.value.trim();
+      if (key) {
+        appState.apiKey = key;
+        localStorage.setItem('google_maps_api_key', key);
+        toggleApiKeyModal();
+        loadGoogleMapsScript();
       }
     }
 
-    function centerMapOnUser() {
-      if (!map) return;
-      map.flyTo([state.gps.latitude, state.gps.longitude], 16, { animate: true, duration: 1 });
-    }
-
-    // --- HTML5 GEOLOCATION TRACKING (OPTIMIZED 500ms REFRESH) ---
-    function startGeolocationTracking() {
-      if (!("geolocation" in navigator)) {
-        logBle("Geolocation API not available", "WARN");
-        return;
-      }
-
-      const options = {
-        enableHighAccuracy: true,
-        maximumAge: 500, // Reduced from 1000ms to 500ms for instantaneous updates
-        timeout: 5000    // Fast timeout
-      };
-
-      state.gps.watchId = navigator.geolocation.watchPosition(
-        (pos) => {
-          if (state.gps.isSimulating) return;
-
-          state.gps.latitude = pos.coords.latitude;
-          state.gps.longitude = pos.coords.longitude;
-          
-          const speed = pos.coords.speed !== null && pos.coords.speed > 0 ? (pos.coords.speed * 3.6) : 0;
-          state.gps.speedKmh = speed;
-          if (pos.coords.heading !== null && !isNaN(pos.coords.heading)) {
-            state.gps.heading = Math.round(pos.coords.heading);
-          }
-
-          updateGpsTelemetryUI();
-          updateNavEngineWithPosition(state.gps.latitude, state.gps.longitude);
-        },
-        (err) => {
-          console.warn("GPS watch:", err.message);
-        },
-        options
-      );
-    }
-
-    function updateGpsTelemetryUI() {
-      const speedStr = state.gps.speedKmh.toFixed(1);
-      document.getElementById('gps-speed-val').innerText = speedStr;
-      document.getElementById('hud-speed').innerHTML = `${speedStr} <span class="text-[10px] text-zinc-500">km/h</span>`;
-
-      const speedBadge = document.getElementById('screen-speed-badge');
-      if (speedBadge) speedBadge.innerText = `${Math.round(state.gps.speedKmh)} KM/H`;
-
-      // Heading
-      const headingBadge = document.getElementById('screen-heading-badge');
-      if (headingBadge) {
-        const headingText = `${String(state.gps.heading).padStart(3, '0')}° ${getCompassDirection(state.gps.heading)}`;
-        headingBadge.innerText = headingText;
-      }
-      document.getElementById('hud-heading').innerText = `${String(state.gps.heading).padStart(3, '0')}°`;
-
-      if (userMarker) {
-        userMarker.setLatLng([state.gps.latitude, state.gps.longitude]);
-      }
-    }
-
-    function getCompassDirection(deg) {
-      const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-      return directions[Math.round(deg / 45) % 8];
-    }
-
-    // --- OSRM BIKING ROUTING ENGINE ---
-    async function calculateRoute(startLat, startLng, endLat, endLng) {
-      logBle(`Routing from (${startLat.toFixed(3)}, ${startLng.toFixed(3)}) to (${endLat.toFixed(3)}, ${endLng.toFixed(3)})`, "SYS");
-
-      const url = `https://router.project-osrm.org/route/v1/biking/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson&steps=true`;
-
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`OSRM HTTP error: ${response.status}`);
-        const data = await response.json();
-
-        if (!data.routes || data.routes.length === 0) {
-          logBle("No route found between coordinates", "WARN");
-          alert("Could not compute route to this location. Please try another destination.");
-          return;
-        }
-
-        const route = data.routes[0];
-        state.navigation.totalDistanceMeters = route.distance;
-        state.navigation.totalDurationSeconds = route.duration;
-        state.navigation.routeGeoJSON = route.geometry;
-
-        const legs = route.legs[0];
-        state.navigation.steps = legs.steps.map((step, idx) => {
-          const maneuver = step.maneuver || {};
-          const iconId = mapOsrmManeuverToIconId(maneuver.type, maneuver.modifier, idx === legs.steps.length - 1);
-          return {
-            index: idx,
-            distance: step.distance,
-            street: (step.name && step.name.trim().length > 0) ? step.name : (maneuver.type === 'arrive' ? 'Destination' : 'Unnamed Way'),
-            iconId: iconId,
-            instruction: `${maneuver.type || 'turn'} ${maneuver.modifier || ''}`.trim(),
-            location: maneuver.location
-          };
-        });
-
-        state.navigation.currentStepIndex = 0;
-
-        renderRouteOnMap(route.geometry);
-
-        const km = (route.distance / 1000).toFixed(1);
-        const mins = Math.round(route.duration / 60);
-        document.getElementById('route-total-dist').innerText = `${km} km`;
-        document.getElementById('route-total-time').innerText = `${mins} min`;
-
-        updateActiveStepUI();
-        transmitNavigationPacket(true);
-
-      } catch (err) {
-        logBle(`Routing failed: ${err.message}`, "ERR");
-        console.error(err);
-      }
-    }
-
-    function mapOsrmManeuverToIconId(type, modifier, isLast) {
-      if (isLast || type === 'arrive') return 4;
-      if (!modifier) return 0;
-      const mod = modifier.toLowerCase();
-      if (mod.includes('uturn')) return 3;
-      if (mod.includes('left')) return 1;
-      if (mod.includes('right')) return 2;
-      return 0;
-    }
-
-    function renderRouteOnMap(geometry) {
-      if (routeLayer && map) {
-        map.removeLayer(routeLayer);
-      }
-
-      const latlngs = geometry.coordinates.map(coord => [coord[1], coord[0]]);
-
-      routeLayer = L.polyline(latlngs, {
-        color: '#06b6d4',
-        weight: 6,
-        opacity: 0.9,
-        lineCap: 'round',
-        lineJoin: 'round',
-      }).addTo(map);
-
-      map.fitBounds(routeLayer.getBounds(), { padding: [50, 50], maxZoom: 17 });
-    }
-
-    function handleDestinationSelected(lat, lng, name) {
-      state.navigation.destination = { lat, lng, name };
-      document.getElementById('route-dest-name').innerText = name;
-
-      if (destMarker && map) map.removeLayer(destMarker);
-
-      const destIcon = L.divIcon({
-        className: 'custom-dest-pin',
-        html: `<div style="background:#10b981; border:2px solid #ffffff; width:22px; height:22px; border-radius:50%; box-shadow:0 0 12px rgba(16,185,129,0.9); display:flex; align-items:center; justify-content:center; color:black; font-weight:bold; font-size:11px;">🏁</div>`,
-        iconSize: [22, 22],
-        iconAnchor: [11, 11]
-      });
-
-      destMarker = L.marker([lat, lng], { icon: destIcon }).addTo(map);
-      calculateRoute(state.gps.latitude, state.gps.longitude, lat, lng);
-    }
-
-    function recalculateRoute() {
-      if (!state.navigation.destination) {
-        alert("Please set a destination on the map first!");
-        return;
-      }
-      calculateRoute(
-        state.gps.latitude, 
-        state.gps.longitude, 
-        state.navigation.destination.lat, 
-        state.navigation.destination.lng
-      );
-    }
-
-    function clearActiveRoute() {
-      state.navigation.destination = null;
-      state.navigation.steps = [];
-      state.navigation.currentStepIndex = 0;
-      state.navigation.routeGeoJSON = null;
-
-      if (routeLayer && map) map.removeLayer(routeLayer);
-      if (destMarker && map) map.removeLayer(destMarker);
-
-      document.getElementById('route-dest-name').innerText = "Tap map or search destination";
-      document.getElementById('route-total-dist').innerText = "--";
-      document.getElementById('route-total-time').innerText = "--";
-
-      document.getElementById('next-step-distance').innerText = "---";
-      document.getElementById('next-step-street').innerText = "Select or tap a destination to calculate route";
-      document.getElementById('step-distance-counter').innerText = "< 25m auto-advance";
-
-      updateScreenMirror(0, "---", "READY TO RIDE", 0, "ETA --:--");
-      logBle("Active route cleared", "SYS");
+    function changeRoutingEngine(engine) {
+      appState.engine = engine;
+      localStorage.setItem('routing_engine_mode', engine);
+      document.getElementById('active-routing-provider').innerText = 
+        engine === 'google' ? 'Google Maps Routes' : 'OSRM Open Source';
+      calculateGoogleRoute();
     }
 
     function calculateEtaString(durationSeconds) {
@@ -1148,584 +1546,56 @@
       return `ETA ${hours}:${minutes} ${ampm}`;
     }
 
-    // --- REAL-TIME TURN STEP TRACKING (< 25m AUTO ADVANCE) ---
-    function updateNavEngineWithPosition(currentLat, currentLng) {
-      if (!state.navigation.steps || state.navigation.steps.length === 0) return;
-
-      const currentStep = state.navigation.steps[state.navigation.currentStepIndex];
-      if (!currentStep) return;
-
-      const stepLoc = currentStep.location;
-      const distToStepMeters = haversineDistanceMeters(currentLat, currentLng, stepLoc[1], stepLoc[0]);
-
-      // Check if within 25 meters of waypoint -> advance maneuver
-      if (distToStepMeters < 25 && state.navigation.currentStepIndex < state.navigation.steps.length - 1) {
-        state.navigation.currentStepIndex++;
-        const nextStep = state.navigation.steps[state.navigation.currentStepIndex];
-        logBle(`Advanced to maneuver #${state.navigation.currentStepIndex + 1}: ${nextStep.street}`, "SYS");
-        playTurnBeep(nextStep.iconId === 4 ? 'arrived' : 'turn');
-        updateActiveStepUI();
-        transmitNavigationPacket(true);
-        return;
-      }
-
-      if (state.navigation.currentStepIndex === state.navigation.steps.length - 1 && distToStepMeters < 20) {
-        playTurnBeep('arrived');
-        updateScreenMirror(4, "0m", "DESTINATION REACHED", state.navigation.currentStepIndex);
-        return;
-      }
-
-      const formattedDist = formatDistance(distToStepMeters);
-      document.getElementById('next-step-distance').innerText = formattedDist;
-      document.getElementById('hud-step-rem').innerText = formattedDist;
-      document.getElementById('step-distance-counter').innerText = `${Math.round(distToStepMeters)}m remaining`;
-      
-      updateScreenMirror(currentStep.iconId, formattedDist, currentStep.street, state.navigation.currentStepIndex);
-      throttledBleTransmit(currentStep.iconId, formattedDist, currentStep.street);
-    }
-
-    function updateActiveStepUI() {
-      if (!state.navigation.steps || state.navigation.steps.length === 0) return;
-      const step = state.navigation.steps[state.navigation.currentStepIndex];
-      if (!step) return;
-
-      const formattedDist = formatDistance(step.distance);
-      document.getElementById('next-step-distance').innerText = formattedDist;
-      document.getElementById('hud-step-rem').innerText = formattedDist;
-      document.getElementById('next-step-street').innerText = step.street;
-      document.getElementById('next-step-badge').innerText = `Step ${state.navigation.currentStepIndex + 1}/${state.navigation.steps.length}`;
-
-      const box = document.getElementById('maneuver-icon-box');
-      box.innerHTML = getManeuverSvg(step.iconId);
-
-      updateScreenMirror(step.iconId, formattedDist, step.street, state.navigation.currentStepIndex);
-    }
-
-    function formatDistance(meters) {
+    function formatMeters(meters) {
       if (meters < 1000) return `${Math.round(meters)}m`;
       return `${(meters / 1000).toFixed(1)}km`;
     }
 
-    function haversineDistanceMeters(lat1, lon1, lat2, lon2) {
+    function haversineMeters(lat1, lon1, lat2, lon2) {
       const R = 6371000;
       const dLat = (lat2 - lat1) * Math.PI / 180;
       const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = 
-        Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-        Math.sin(dLon/2) * Math.sin(dLon/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
-    function getManeuverSvg(iconId) {
-      switch(iconId) {
-        case 1:
-          return `<svg class="w-7 h-7 text-[#00FF66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 19v-6a4 4 0 00-4-4H5m0 0l4-4m-4 4l4 4"/></svg>`;
-        case 2:
-          return `<svg class="w-7 h-7 text-[#00FF66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 19v-6a4 4 0 014-4h10m0 0l-4-4m4 4l-4 4"/></svg>`;
-        case 3:
-          return `<svg class="w-7 h-7 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 19v-8a6 6 0 00-12 0v8m0 0l-4-4m4 4l4-4"/></svg>`;
-        case 4:
-          return `<svg class="w-7 h-7 text-[#00FF66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 21V5a2 2 0 012-2h10l-2 5 2 5H7"/></svg>`;
-        default:
-          return `<svg class="w-7 h-7 text-[#00FF66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`;
-      }
-    }
-
-    // --- 240x240 GC9A01 COCKPIT SCREEN MIRROR (CLEAN FLAT & ACCENTS) ---
-    function updateScreenMirror(iconId, distanceStr, streetName, stepIndex = null, customEta = null) {
-      const icons = {
-        0: document.getElementById('screen-icon-straight'),
-        1: document.getElementById('screen-icon-left'),
-        2: document.getElementById('screen-icon-right'),
-        3: document.getElementById('screen-icon-uturn'),
-        4: document.getElementById('screen-icon-arrive'),
-      };
-
-      for (let key in icons) {
-        if (icons[key]) {
-          if (parseInt(key) === iconId) {
-            icons[key].classList.remove('hidden');
-          } else {
-            icons[key].classList.add('hidden');
-          }
-        }
-      }
-
-      // Parse distance into number and unit e.g. "350m" -> "350" + "m"
-      const distMatch = String(distanceStr).trim().match(/^([\d.]+)\s*([a-zA-Z]+)?$/);
-      if (distMatch) {
-        document.getElementById('screen-dist-num').innerText = distMatch[1];
-        document.getElementById('screen-dist-unit').innerText = distMatch[2] || 'm';
-      } else {
-        document.getElementById('screen-dist-num').innerText = distanceStr;
-        document.getElementById('screen-dist-unit').innerText = '';
-      }
-
-      // Street name in uppercase
-      document.getElementById('screen-street-text').innerText = (streetName || "PARK AVENUE").toUpperCase();
-
-      // Top-left step indicator (e.g. "6")
-      const stepNum = (stepIndex !== null && stepIndex !== undefined) ? (stepIndex + 1) : 6;
-      document.getElementById('screen-step-number').innerText = stepNum;
-
-      // ETA string
-      let etaStr = customEta;
-      if (!etaStr) {
-        etaStr = calculateEtaString(state.navigation.totalDurationSeconds);
-      }
-      document.getElementById('screen-eta-text').innerText = etaStr;
-    }
-
-    // --- NOMINATIM DESTINATION SEARCH ---
-    async function executeSearch() {
-      const input = document.getElementById('search-input');
-      const query = input.value.trim();
-      if (!query) return;
-
-      const resultsList = document.getElementById('search-results-list');
-      resultsList.classList.remove('hidden');
-      resultsList.innerHTML = `<div class="p-3 text-zinc-400 font-mono text-center">Searching location...</div>`;
-
-      try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (!data || data.length === 0) {
-          resultsList.innerHTML = `<div class="p-3 text-zinc-500 font-mono text-center">No location found. Try adding city or area.</div>`;
-          return;
-        }
-
-        resultsList.innerHTML = data.map((item) => {
-          const title = item.name || item.display_name.split(',')[0];
-          const subtitle = item.display_name;
-          const lat = parseFloat(item.lat);
-          const lon = parseFloat(item.lon);
-          return `
-            <div onclick="selectSearchResult(${lat}, ${lon}, '${escapeHtml(title)}')" class="p-2.5 hover:bg-zinc-800/80 cursor-pointer transition-colors">
-              <div class="font-bold text-emerald-400">${escapeHtml(title)}</div>
-              <div class="text-[11px] text-zinc-400 truncate">${escapeHtml(subtitle)}</div>
-            </div>
-          `;
-        }).join('');
-
-        document.getElementById('clear-search-btn').classList.remove('hidden');
-
-      } catch (err) {
-        resultsList.innerHTML = `<div class="p-3 text-rose-400 font-mono text-center">Search error: ${err.message}</div>`;
-      }
-    }
-
-    function selectSearchResult(lat, lon, name) {
-      document.getElementById('search-results-list').classList.add('hidden');
-      document.getElementById('search-input').value = name;
-      handleDestinationSelected(lat, lon, name);
-    }
-
-    function clearSearchInput() {
-      document.getElementById('search-input').value = '';
-      document.getElementById('search-results-list').classList.add('hidden');
-      document.getElementById('clear-search-btn').classList.add('hidden');
-    }
-
-    function escapeHtml(text) {
-      if (!text) return '';
-      return text.replace(/[&<>"']/g, function(m) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-      });
-    }
-
-    // --- MANUAL TURN SIMULATION ---
-    function simulateTurn(iconId, distStr, street) {
-      updateScreenMirror(iconId, distStr, street, 5);
-      const packet = `${iconId}|${distStr}|${street}`;
-      sendBleData(packet);
-      playTurnBeep(iconId === 4 ? 'arrived' : 'turn');
-    }
-
-    function sendCustomPacket() {
-      const input = document.getElementById('custom-ble-input');
-      const text = input.value.trim();
-      if (!text) return;
-      sendBleData(text);
-      input.value = '';
-    }
-
-    function pushCurrentNavPacket() {
-      transmitNavigationPacket(true);
-    }
-
-    // --- TOUCH SENSOR PRESS-AND-HOLD (>800ms) STATUS OVERLAY LOGIC ---
-    let touchHoldTimeout = null;
-    let isStatusOverlayVisible = false;
-
-    function toggleStatusOverlay(forceState = null) {
-      const overlay = document.getElementById('screen-status-overlay');
-      if (!overlay) return;
-
-      isStatusOverlayVisible = (forceState !== null) ? forceState : !isStatusOverlayVisible;
-
-      if (isStatusOverlayVisible) {
-        // 1. Live Battery percentage
-        const battElem = document.getElementById('overlay-battery-val');
-        if (battElem) battElem.innerText = "78%";
-
-        // 2. Bluetooth Connection Status
-        const bleDot = document.getElementById('overlay-ble-dot');
-        const bleLabel = document.getElementById('overlay-ble-label');
-        if (state.ble.isConnected) {
-          if (bleDot) bleDot.className = "w-2 h-2 rounded-full bg-[#00FF66] animate-pulse";
-          if (bleLabel) {
-            bleLabel.innerText = "CONNECTED";
-            bleLabel.className = "text-[#00FF66]";
-          }
-        } else {
-          if (bleDot) bleDot.className = "w-2 h-2 rounded-full bg-rose-500";
-          if (bleLabel) {
-            bleLabel.innerText = "DISCONNECTED";
-            bleLabel.className = "text-rose-400";
-          }
-        }
-
-        // 3. Total Remaining Trip Distance vs Turn Distance
-        const totalElem = document.getElementById('overlay-trip-total');
-        if (totalElem) {
-          totalElem.innerText = state.navigation.totalDistanceMeters > 0 
-            ? formatDistance(state.navigation.totalDistanceMeters) 
-            : "4.8 km";
-        }
-        const turnElem = document.getElementById('overlay-next-turn');
-        if (turnElem) {
-          const step = state.navigation.steps[state.navigation.currentStepIndex];
-          turnElem.innerText = step ? formatDistance(step.distance) : "350 m";
-        }
-
-        overlay.classList.remove('opacity-0', 'pointer-events-none', 'scale-90');
-        overlay.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
-        logBle("Status Overlay Activated via >800ms Touch Sensor hold", "SYS");
-      } else {
-        overlay.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
-        overlay.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-      }
-    }
-
-    function startTouchHoldSim() {
-      const ind = document.getElementById('touch-hold-indicator');
-      if (ind) ind.className = "w-2 h-2 rounded-full bg-amber-400 animate-ping";
-      if (touchHoldTimeout) clearTimeout(touchHoldTimeout);
-      touchHoldTimeout = setTimeout(() => {
-        toggleStatusOverlay();
-        if (ind) ind.className = "w-2 h-2 rounded-full bg-[#00FF66]";
-      }, 800); // Exact 800ms threshold
-    }
-
-    function endTouchHoldSim() {
-      const ind = document.getElementById('touch-hold-indicator');
-      if (ind) ind.className = "w-2 h-2 rounded-full bg-[#00FF66]";
-      if (touchHoldTimeout) {
-        clearTimeout(touchHoldTimeout);
-        touchHoldTimeout = null;
-      }
-    }
-
-    let lastSentTimestamp = 0;
-    function throttledBleTransmit(iconId, distanceStr, streetName) {
-      const now = Date.now();
-      // Reduced to 500ms for high responsiveness & real-time updates
-      if (now - lastSentTimestamp > 500) {
-        lastSentTimestamp = now;
-        const stepNum = state.navigation.currentStepIndex + 1;
-        const eta = calculateEtaString(state.navigation.totalDurationSeconds);
-        const packet = `${iconId}|${distanceStr}|${streetName}|${stepNum}|${eta}`;
-        if (packet !== state.navigation.lastSentPacket) {
-          state.navigation.lastSentPacket = packet;
-          sendBleData(packet);
-        }
-      }
-    }
-
-    function transmitNavigationPacket(force = false) {
-      if (!state.navigation.steps || state.navigation.steps.length === 0) return;
-      const step = state.navigation.steps[state.navigation.currentStepIndex];
-      if (!step) return;
-
-      const formattedDist = formatDistance(step.distance);
-      const stepNum = state.navigation.currentStepIndex + 1;
-      const eta = calculateEtaString(state.navigation.totalDurationSeconds);
-      const packet = `${step.iconId}|${formattedDist}|${step.street}|${stepNum}|${eta}`;
-
-      if (force || packet !== state.navigation.lastSentPacket) {
-        state.navigation.lastSentPacket = packet;
-        sendBleData(packet);
-      }
-    }
-
-    // --- SIMULATED BIKE RIDE ENGINE (OPTIMIZED 1-SECOND REFRESH) ---
-    function toggleSimulatedGps() {
-      state.gps.isSimulating = !state.gps.isSimulating;
-      const btn = document.getElementById('sim-gps-btn');
-      const dot = document.getElementById('sim-dot');
-
-      if (state.gps.isSimulating) {
-        btn.classList.add('border-emerald-500', 'text-emerald-400');
-        dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-ping";
-        logBle("Simulated ride started (~20 km/h, 1s refresh)", "SYS");
-        startSimInterval();
-      } else {
-        btn.classList.remove('border-emerald-500', 'text-emerald-400');
-        dot.className = "w-2 h-2 rounded-full bg-zinc-600";
-        if (state.gps.simInterval) clearInterval(state.gps.simInterval);
-        logBle("Simulated ride stopped. Using live GPS.", "SYS");
-      }
-    }
-
-    function startSimInterval() {
-      if (state.gps.simInterval) clearInterval(state.gps.simInterval);
-
-      let coords = [];
-      if (state.navigation.routeGeoJSON && state.navigation.routeGeoJSON.coordinates) {
-        coords = state.navigation.routeGeoJSON.coordinates;
-      } else {
-        const centerLat = state.gps.latitude;
-        const centerLon = state.gps.longitude;
-        for (let i = 0; i < 360; i += 8) {
-          const rad = i * Math.PI / 180;
-          coords.push([centerLon + 0.003 * Math.cos(rad), centerLat + 0.003 * Math.sin(rad)]);
-        }
-      }
-
-      state.gps.simIndex = 0;
-      // High-responsiveness 1000ms loop
-      state.gps.simInterval = setInterval(() => {
-        if (!state.gps.isSimulating) return;
-
-        state.gps.simIndex = (state.gps.simIndex + 1) % coords.length;
-        const currentCoord = coords[state.gps.simIndex];
-        
-        state.gps.latitude = currentCoord[1];
-        state.gps.longitude = currentCoord[0];
-        state.gps.speedKmh = 21.0 + (Math.sin(state.gps.simIndex) * 3);
-        state.gps.heading = (state.gps.heading + 5) % 360;
-
-        updateGpsTelemetryUI();
-        updateNavEngineWithPosition(state.gps.latitude, state.gps.longitude);
-      }, 1400);
-    }
-
-    // ===============================================================
-    // WEB BLUETOOTH API ENGINE (NUS + 1337 FALLBACK)
-    // ===============================================================
-
-    async function handleBleToggle() {
-      if (state.ble.isConnected) {
-        disconnectBle();
-      } else {
-        await connectBle();
-      }
-    }
-
-    async function connectBle() {
-      logBle("Scanning for ESP32 Bluetooth device...", "SYS");
-
-      if (!navigator.bluetooth) {
-        logBle("navigator.bluetooth unavailable. On iOS, open in Bluefy or WebBLE!", "ERR");
-        toggleIosHelpModal();
-        return;
-      }
-
-      try {
-        updateBleStatusUI("SCANNING...", "text-amber-400");
-
-        const device = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: [
-            NUS_SERVICE_UUID,
-            FALLBACK_SERVICE_UUID,
-            'battery_service',
-            'device_information'
-          ]
-        });
-
-        state.ble.device = device;
-        logBle(`Discovered: "${device.name || 'NavPod ESP32'}"`, "BLE");
-
-        device.addEventListener('gattserverdisconnected', onGattDisconnected);
-
-        logBle("Connecting to GATT Server...", "SYS");
-        const server = await device.gatt.connect();
-        state.ble.server = server;
-        logBle("GATT Server connected!", "BLE");
-
-        // Nordic UART Service Discovery
-        try {
-          const service = await server.getPrimaryService(NUS_SERVICE_UUID);
-          state.ble.activeServiceType = 'NUS';
-          state.ble.rxCharacteristic = await service.getCharacteristic(NUS_RX_CHAR_UUID);
-          logBle("Bound Nordic UART Service (NUS)", "BLE");
-
-          try {
-            state.ble.txCharacteristic = await service.getCharacteristic(NUS_TX_CHAR_UUID);
-            await state.ble.txCharacteristic.startNotifications();
-            state.ble.txCharacteristic.addEventListener('characteristicvaluechanged', handleBleNotification);
-            logBle("NUS TX Notifications Active", "BLE");
-          } catch (txErr) {
-            logBle(`TX notifications not enabled: ${txErr.message}`, "WARN");
-          }
-        } catch (nusErr) {
-          logBle("NUS not found, falling back to 13370001...", "WARN");
-          const fbService = await server.getPrimaryService(FALLBACK_SERVICE_UUID);
-          state.ble.activeServiceType = 'FALLBACK';
-          state.ble.rxCharacteristic = await fbService.getCharacteristic(FALLBACK_CHAR_UUID);
-          logBle("Bound Secondary 1337 Fallback Service", "BLE");
-        }
-
-        state.ble.isConnected = true;
-        state.ble.reconnectAttempts = 0;
-        updateBleStatusUI("CONNECTED", "text-emerald-400");
-        document.getElementById('ble-ping-dot').className = "absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-zinc-950 shadow-glow-emerald";
-        document.getElementById('ble-protocol-tag').innerText = `${state.ble.activeServiceType} • ${device.name || 'NavPod-C6'}`;
-        document.getElementById('ble-action-label').innerText = "DISCONNECT";
-        document.getElementById('ble-action-btn').className = "px-4 py-2 rounded-xl bg-zinc-800 hover:bg-rose-950 border border-rose-800 text-rose-400 text-xs font-bold font-mono tracking-wider flex items-center gap-2 transition-all active:scale-95 cursor-pointer";
-
-        // Initial sync packet
-        sendBleData("0|250m|NavPod Ready");
-
-      } catch (err) {
-        logBle(`Connection failed: ${err.message}`, "ERR");
-        disconnectBle();
-      }
-    }
-
-    function onGattDisconnected(event) {
-      logBle("BLE Disconnected.", "WARN");
-      state.ble.isConnected = false;
-      updateBleStatusUI("DISCONNECTED", "text-rose-400");
-      document.getElementById('ble-ping-dot').className = "absolute -top-1 -right-1 w-3 h-3 rounded-full bg-rose-500 border-2 border-zinc-950";
-      document.getElementById('ble-action-label').innerText = "CONNECT BLE";
-      document.getElementById('ble-action-btn').className = "px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black text-xs font-bold font-mono tracking-wider flex items-center gap-2 shadow-glow-emerald transition-all active:scale-95 cursor-pointer";
-
-      // Auto reconnect fallback
-      if (state.ble.reconnectAttempts < 3 && state.ble.device) {
-        state.ble.reconnectAttempts++;
-        logBle(`Auto-reconnecting (${state.ble.reconnectAttempts}/3)...`, "SYS");
-        setTimeout(async () => {
-          if (!state.ble.isConnected && state.ble.device) {
-            try {
-              await state.ble.device.gatt.connect();
-              logBle("Reconnected to ESP32!", "BLE");
-            } catch (reconErr) {
-              logBle(`Reconnect attempt failed: ${reconErr.message}`, "WARN");
-            }
-          }
-        }, 2000);
-      }
-    }
-
-    function disconnectBle() {
-      if (state.ble.device && state.ble.device.gatt.connected) {
-        state.ble.device.gatt.disconnect();
-      }
-      state.ble.isConnected = false;
-      state.ble.rxCharacteristic = null;
-      state.ble.txCharacteristic = null;
-      updateBleStatusUI("DISCONNECTED", "text-rose-400");
-      document.getElementById('ble-ping-dot').className = "absolute -top-1 -right-1 w-3 h-3 rounded-full bg-rose-500 border-2 border-zinc-950";
-      document.getElementById('ble-action-label').innerText = "CONNECT BLE";
-      document.getElementById('ble-action-btn').className = "px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black text-xs font-bold font-mono tracking-wider flex items-center gap-2 shadow-glow-emerald transition-all active:scale-95 cursor-pointer";
-    }
-
-    async function sendBleData(dataString) {
-      logBle(`TX: "${dataString}"`, "TX");
-
-      if (!state.ble.isConnected || !state.ble.rxCharacteristic) {
-        logBle("Simulated locally in Cockpit Mirror", "SYS");
-        return;
-      }
-
-      try {
-        const encoder = new TextEncoder();
-        const payload = encoder.encode(dataString + "\n");
-
-        if (state.ble.rxCharacteristic.writeValueWithoutResponse) {
-          await state.ble.rxCharacteristic.writeValueWithoutResponse(payload);
-        } else {
-          await state.ble.rxCharacteristic.writeValue(payload);
-        }
-      } catch (err) {
-        logBle(`Send error: ${err.message}`, "ERR");
-      }
-    }
-
-    function handleBleNotification(event) {
-      const decoder = new TextDecoder('utf-8');
-      const text = decoder.decode(event.target.value);
-      logBle(`RX Notify: "${text.trim()}"`, "RX");
-    }
-
-    function updateBleStatusUI(text, colorClass) {
-      const elem = document.getElementById('ble-status-text');
-      elem.innerText = text;
-      elem.className = `${colorClass} font-mono font-medium`;
-    }
-
-    function logBle(message, tag = "INFO") {
-      const consoleElem = document.getElementById('ble-log-console');
+    function logToConsole(message, tag = "SYS") {
+      const consoleElem = document.getElementById('ble-log-stream');
       if (!consoleElem) return;
       const now = new Date();
-      const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      const timeStr = now.toTimeString().split(' ')[0];
 
       let tagColor = "text-zinc-500";
-      if (tag === "TX") tagColor = "text-cyan-400 font-bold";
-      if (tag === "RX") tagColor = "text-emerald-400 font-bold";
+      if (tag === "TX") tagColor = "text-[#00FF66] font-bold";
+      if (tag === "BLE") tagColor = "text-cyan-400 font-bold";
       if (tag === "ERR") tagColor = "text-rose-400 font-bold";
       if (tag === "WARN") tagColor = "text-amber-400 font-bold";
-      if (tag === "BLE") tagColor = "text-emerald-300";
-      if (tag === "SYS") tagColor = "text-zinc-400";
 
       const row = document.createElement('div');
       row.className = "flex items-start gap-1.5 leading-tight";
       row.innerHTML = `
         <span class="text-zinc-600 select-none">${timeStr}</span>
         <span class="${tagColor}">[${tag}]</span>
-        <span class="text-zinc-300 break-all">${escapeHtml(message)}</span>
+        <span class="text-zinc-300 break-all">${message}</span>
       `;
-
       consoleElem.appendChild(row);
       consoleElem.scrollTop = consoleElem.scrollHeight;
     }
 
-    function clearBleLog() {
-      const consoleElem = document.getElementById('ble-log-console');
+    function clearConsoleLog() {
+      const consoleElem = document.getElementById('ble-log-stream');
       consoleElem.innerHTML = `<div class="text-zinc-600">[System] Log cleared.</div>`;
     }
 
-    function copyBleLogs() {
-      const consoleElem = document.getElementById('ble-log-console');
-      navigator.clipboard.writeText(consoleElem.innerText).then(() => {
-        alert("BLE log copied to clipboard!");
-      });
-    }
-
-    function toggleIosHelpModal() {
-      const modal = document.getElementById('ios-help-modal');
-      modal.classList.toggle('hidden');
-    }
-
-    // --- INITIALIZATION ---
+    // --- DOMContentLoaded Boot ---
     window.addEventListener('DOMContentLoaded', () => {
-      initMap();
-      startGeolocationTracking();
+      // 1. Initial 240x240 Watch Display (Matches Design Mockup)
+      updateWatchDisplay(1, "350m", "PARK AVENUE", 5, "ETA 4:12 PM", 0.42);
 
-      const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-      const hasBle = !!navigator.bluetooth;
-
-      if (isIos && !hasBle) {
-        logBle("iOS Safari detected. Open in Bluefy or WebBLE for Bluetooth.", "WARN");
-      }
-
-      updateScreenMirror(1, "350m", "PARK AVENUE", 5, "ETA 4:12 PM");
+      // 2. Load Google Maps Script with API Key
+      loadGoogleMapsScript();
     });
 
   </script>
