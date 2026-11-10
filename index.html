@@ -429,96 +429,102 @@
       <!-- ========================================================== -->
       <!-- 2.1 GC9A01 240x240 COCKPIT SCREEN MIRROR (1:1 Ratio) -->
       <!-- ========================================================== -->
-      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col items-center shadow-xl backdrop-blur-sm relative overflow-hidden">
+      <div class="bg-[#121619] border border-[#1e262c] rounded-2xl p-4 sm:p-5 flex flex-col items-center shadow-2xl relative overflow-hidden">
         
         <!-- Header tag -->
-        <div class="w-full flex items-center justify-between mb-3 text-xs">
-          <div class="flex items-center gap-1.5 font-bold tracking-wider text-zinc-200">
-            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+        <div class="w-full flex items-center justify-between mb-2 text-xs">
+          <div class="flex items-center gap-1.5 font-bold tracking-wider text-zinc-300">
+            <span class="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse"></span>
             <span>GC9A01 ROUND COCKPIT</span>
             <span class="text-[10px] font-mono text-zinc-500">(240×240 1.28")</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 font-semibold">
-              LIVE MIRROR
+            <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-[#00ff66]/15 border border-[#00FF66]/40 text-[#00FF66] font-semibold">
+              LIVE UI
             </span>
           </div>
         </div>
 
         <!-- 240x240 Circular Display Bezel Replica -->
-        <div class="relative p-3.5 rounded-full bg-gradient-to-b from-zinc-700 via-zinc-900 to-black shadow-bezel my-2">
+        <div class="relative p-2.5 rounded-full bg-gradient-to-b from-[#1c242a] via-[#101417] to-black shadow-bezel my-2">
           
-          <!-- Outer Screws details on Bezel -->
-          <div class="absolute top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-zinc-600 border border-zinc-800"></div>
-          <div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-zinc-600 border border-zinc-800"></div>
-          <div class="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-zinc-600 border border-zinc-800"></div>
-          <div class="absolute right-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-zinc-600 border border-zinc-800"></div>
+          <!-- Top Left Indicator: Bold neon green number (e.g. "6" or step sequence) -->
+          <div class="absolute top-2.5 left-3.5 z-30 pointer-events-none select-none">
+            <span id="screen-step-number" class="text-[#00FF66] font-extrabold text-3xl font-sans drop-shadow-[0_0_8px_rgba(0,255,102,0.4)] leading-none">6</span>
+          </div>
 
           <!-- The 240x240 Active Screen Area -->
           <div 
             id="gc9a01-screen" 
-            class="w-[240px] h-[240px] rounded-full gc9a01-bg relative overflow-hidden flex flex-col items-center justify-between p-4 text-center select-none border border-zinc-800">
+            class="w-[240px] h-[240px] rounded-full bg-[#121619] relative overflow-hidden flex flex-col items-center justify-center p-3 text-center select-none border border-[#1e262c]">
             
-            <!-- Glass reflection overlay -->
-            <div class="absolute inset-0 rounded-full glass-glare pointer-events-none z-20"></div>
+            <!-- Subtle Radial Compass Grid Lines & Neon Green Progress Inset Ring -->
+            <svg class="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 240 240">
+              <!-- Faint 8-Axis Radial Compass Lines -->
+              <g stroke="#1b242a" stroke-width="1.2">
+                <line x1="0" y1="120" x2="240" y2="120" />
+                <line x1="120" y1="0" x2="120" y2="240" />
+                <line x1="35" y1="35" x2="205" y2="205" />
+                <line x1="205" y1="35" x2="35" y2="205" />
+              </g>
+              <!-- Vibrant Neon Green Progress Ring (#00FF66) -->
+              <circle cx="120" cy="120" r="95" fill="none" stroke="#00FF66" stroke-width="6.5" stroke-linecap="round" />
+            </svg>
 
-            <!-- Cockpit Display Content -->
-            <div class="w-full h-full flex flex-col items-center justify-between z-10 py-1">
+            <!-- Center Content Hierarchy (Vertically Stacked & Centered) -->
+            <div class="relative z-10 flex flex-col items-center justify-center w-full px-4 text-center mt-1">
               
-              <!-- Top bar on screen: Speed & Compass Heading -->
-              <div class="flex items-center justify-between w-full px-4 pt-1">
-                <span id="screen-speed-badge" class="text-[11px] font-mono font-black text-cyan-400 tracking-wider">0 KM/H</span>
-                <span id="screen-heading-badge" class="text-[10px] font-mono font-bold text-zinc-400">---° N</span>
+              <!-- 1. Top Icon: Bold, Clean White Vector Turn Arrow -->
+              <div id="screen-arrow-container" class="w-16 h-16 flex items-center justify-center mb-1">
+                <!-- Left Turn (Default in user mockup) -->
+                <svg id="screen-icon-left" class="w-14 h-14" viewBox="0 0 64 64" fill="none">
+                  <path d="M42 52 V28 C42 20 36 14 28 14 H14" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M23 4 L11 14 L23 24" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+
+                <!-- Right Turn -->
+                <svg id="screen-icon-right" class="w-14 h-14 hidden" viewBox="0 0 64 64" fill="none">
+                  <path d="M22 52 V28 C22 20 28 14 36 14 H50" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M41 4 L53 14 L41 24" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+
+                <!-- Straight -->
+                <svg id="screen-icon-straight" class="w-14 h-14 hidden" viewBox="0 0 64 64" fill="none">
+                  <path d="M32 52 V14" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round"/>
+                  <path d="M19 26 L32 12 L45 26" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+
+                <!-- U-Turn -->
+                <svg id="screen-icon-uturn" class="w-14 h-14 hidden" viewBox="0 0 64 64" fill="none">
+                  <path d="M43 52 V26 C43 14 21 14 21 26 V48" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+                  <path d="M11 38 L21 48 L31 38" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+
+                <!-- Arrived / Flag -->
+                <svg id="screen-icon-arrive" class="w-14 h-14 hidden" viewBox="0 0 64 64" fill="none">
+                  <path d="M18 54 V14" stroke="#FFFFFF" stroke-width="6.5" stroke-linecap="round"/>
+                  <path d="M18 16 C30 11 36 21 50 16 V38 C36 43 30 33 18 38 Z" fill="#FFFFFF"/>
+                </svg>
               </div>
 
-              <!-- Center Turn Maneuver Vector Arrow -->
-              <div class="relative w-28 h-28 flex items-center justify-center my-auto">
-                <div id="screen-arrow-container" class="transition-transform duration-300">
-                  <!-- Straight arrow (Icon 0) -->
-                  <svg id="screen-icon-straight" class="w-24 h-24 text-emerald-400 drop-shadow-[0_0_14px_rgba(52,211,153,0.85)]" viewBox="0 0 100 100" fill="none">
-                    <path d="M50 85 V20" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
-                    <path d="M26 40 L50 16 L74 40" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-
-                  <!-- Left turn arrow (Icon 1) -->
-                  <svg id="screen-icon-left" class="w-24 h-24 text-cyan-400 drop-shadow-[0_0_14px_rgba(34,211,238,0.85)] hidden" viewBox="0 0 100 100" fill="none">
-                    <path d="M68 85 V52 C68 38 56 30 42 30 H20" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
-                    <path d="M38 10 L16 30 L38 50" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-
-                  <!-- Right turn arrow (Icon 2) -->
-                  <svg id="screen-icon-right" class="w-24 h-24 text-cyan-400 drop-shadow-[0_0_14px_rgba(34,211,238,0.85)] hidden" viewBox="0 0 100 100" fill="none">
-                    <path d="M32 85 V52 C32 38 44 30 58 30 H80" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
-                    <path d="M62 10 L84 30 L62 50" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-
-                  <!-- U-Turn arrow (Icon 3) -->
-                  <svg id="screen-icon-uturn" class="w-24 h-24 text-amber-400 drop-shadow-[0_0_14px_rgba(251,191,36,0.85)] hidden" viewBox="0 0 100 100" fill="none">
-                    <path d="M68 85 V44 C68 24 32 24 32 44 V80" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
-                    <path d="M16 62 L32 82 L48 62" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-
-                  <!-- Arrived / Finish Flag (Icon 4) -->
-                  <svg id="screen-icon-arrive" class="w-24 h-24 text-emerald-400 drop-shadow-[0_0_14px_rgba(52,211,153,0.85)] hidden" viewBox="0 0 100 100" fill="none">
-                    <path d="M30 85 V20" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
-                    <path d="M30 22 C45 15 55 30 75 22 V54 C55 62 45 47 30 54 Z" fill="currentColor"/>
-                  </svg>
-                </div>
+              <!-- 2. Street Name: "PARK AVENUE" in uppercase bright green sans-serif -->
+              <div class="overflow-hidden w-[160px] mx-auto text-center">
+                <span id="screen-street-text" class="text-[#00FF66] font-semibold text-[13px] tracking-wider uppercase block truncate font-sans">
+                  PARK AVENUE
+                </span>
               </div>
 
-              <!-- Distance to turn & Street Marquee -->
-              <div class="w-full px-3 pb-1">
-                <!-- Large Digital Distance Counter -->
-                <div id="screen-dist-text" class="text-3xl font-black font-mono tracking-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
-                  ---
-                </div>
+              <!-- 3. Distance: "350m" in large bold prominent green numbers -->
+              <div class="flex items-baseline justify-center text-[#00FF66] font-sans font-black leading-none mt-1">
+                <span id="screen-dist-num" class="text-4xl tracking-tight">350</span>
+                <span id="screen-dist-unit" class="text-xl font-bold ml-0.5">m</span>
+              </div>
 
-                <!-- Street name marquee -->
-                <div class="overflow-hidden w-[180px] mx-auto text-center mt-1">
-                  <div id="screen-street-text" class="text-xs font-bold text-zinc-300 truncate">
-                    Ready to Navigate
-                  </div>
-                </div>
+              <!-- 4. ETA: "ETA 4:12 PM" in smaller, muted gray-green text -->
+              <div class="mt-1.5">
+                <span id="screen-eta-text" class="text-[#7d9987] font-medium text-[11px] tracking-wide font-sans">
+                  ETA 4:12 PM
+                </span>
               </div>
 
             </div>
@@ -526,11 +532,17 @@
           </div>
         </div>
 
+        <!-- Minimalist Caption -->
+        <div class="text-center mt-2">
+          <div class="text-[11px] font-bold text-zinc-300 tracking-wider uppercase font-sans">CLEAN FLAT</div>
+          <div class="text-[10px] text-zinc-500 uppercase font-semibold font-sans">&amp; ACCENTS</div>
+        </div>
+
         <!-- Sync Button -->
-        <div class="mt-2 text-center">
+        <div class="mt-3 text-center">
           <button 
             onclick="pushCurrentNavPacket()" 
-            class="px-4 py-1.5 rounded-lg bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-500/40 text-cyan-300 font-mono text-xs font-semibold transition-all">
+            class="px-4 py-1.5 rounded-lg bg-[#00FF66]/10 hover:bg-[#00FF66]/20 border border-[#00FF66]/40 text-[#00FF66] font-mono text-xs font-bold transition-all">
             Sync Packet to ESP32
           </button>
         </div>
@@ -1044,8 +1056,19 @@
       document.getElementById('next-step-street').innerText = "Select or tap a destination to calculate route";
       document.getElementById('step-distance-counter').innerText = "< 25m auto-advance";
 
-      updateScreenMirror(0, "---", "Ready to Navigate");
+      updateScreenMirror(0, "---", "READY TO RIDE", 0, "ETA --:--");
       logBle("Active route cleared", "SYS");
+    }
+
+    function calculateEtaString(durationSeconds) {
+      if (!durationSeconds || durationSeconds <= 0) return "ETA 4:12 PM";
+      const arrival = new Date(Date.now() + (durationSeconds * 1000));
+      let hours = arrival.getHours();
+      const minutes = String(arrival.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      return `ETA ${hours}:${minutes} ${ampm}`;
     }
 
     // --- REAL-TIME TURN STEP TRACKING (< 25m AUTO ADVANCE) ---
@@ -1071,7 +1094,7 @@
 
       if (state.navigation.currentStepIndex === state.navigation.steps.length - 1 && distToStepMeters < 20) {
         playTurnBeep('arrived');
-        updateScreenMirror(4, "0m", "Destination Reached");
+        updateScreenMirror(4, "0m", "DESTINATION REACHED", state.navigation.currentStepIndex);
         return;
       }
 
@@ -1080,7 +1103,7 @@
       document.getElementById('hud-step-rem').innerText = formattedDist;
       document.getElementById('step-distance-counter').innerText = `${Math.round(distToStepMeters)}m remaining`;
       
-      updateScreenMirror(currentStep.iconId, formattedDist, currentStep.street);
+      updateScreenMirror(currentStep.iconId, formattedDist, currentStep.street, state.navigation.currentStepIndex);
       throttledBleTransmit(currentStep.iconId, formattedDist, currentStep.street);
     }
 
@@ -1098,7 +1121,7 @@
       const box = document.getElementById('maneuver-icon-box');
       box.innerHTML = getManeuverSvg(step.iconId);
 
-      updateScreenMirror(step.iconId, formattedDist, step.street);
+      updateScreenMirror(step.iconId, formattedDist, step.street, state.navigation.currentStepIndex);
     }
 
     function formatDistance(meters) {
@@ -1121,20 +1144,20 @@
     function getManeuverSvg(iconId) {
       switch(iconId) {
         case 1:
-          return `<svg class="w-7 h-7 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 19v-6a4 4 0 00-4-4H5m0 0l4-4m-4 4l4 4"/></svg>`;
+          return `<svg class="w-7 h-7 text-[#00FF66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 19v-6a4 4 0 00-4-4H5m0 0l4-4m-4 4l4 4"/></svg>`;
         case 2:
-          return `<svg class="w-7 h-7 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 19v-6a4 4 0 014-4h10m0 0l-4-4m4 4l-4 4"/></svg>`;
+          return `<svg class="w-7 h-7 text-[#00FF66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 19v-6a4 4 0 014-4h10m0 0l-4-4m4 4l-4 4"/></svg>`;
         case 3:
           return `<svg class="w-7 h-7 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 19v-8a6 6 0 00-12 0v8m0 0l-4-4m4 4l4-4"/></svg>`;
         case 4:
-          return `<svg class="w-7 h-7 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 21V5a2 2 0 012-2h10l-2 5 2 5H7"/></svg>`;
+          return `<svg class="w-7 h-7 text-[#00FF66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 21V5a2 2 0 012-2h10l-2 5 2 5H7"/></svg>`;
         default:
-          return `<svg class="w-7 h-7 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`;
+          return `<svg class="w-7 h-7 text-[#00FF66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`;
       }
     }
 
-    // --- 240x240 GC9A01 COCKPIT SCREEN MIRROR ---
-    function updateScreenMirror(iconId, distanceStr, streetName) {
+    // --- 240x240 GC9A01 COCKPIT SCREEN MIRROR (CLEAN FLAT & ACCENTS) ---
+    function updateScreenMirror(iconId, distanceStr, streetName, stepIndex = null, customEta = null) {
       const icons = {
         0: document.getElementById('screen-icon-straight'),
         1: document.getElementById('screen-icon-left'),
@@ -1144,15 +1167,38 @@
       };
 
       for (let key in icons) {
-        if (parseInt(key) === iconId) {
-          icons[key].classList.remove('hidden');
-        } else {
-          icons[key].classList.add('hidden');
+        if (icons[key]) {
+          if (parseInt(key) === iconId) {
+            icons[key].classList.remove('hidden');
+          } else {
+            icons[key].classList.add('hidden');
+          }
         }
       }
 
-      document.getElementById('screen-dist-text').innerText = distanceStr;
-      document.getElementById('screen-street-text').innerText = streetName;
+      // Parse distance into number and unit e.g. "350m" -> "350" + "m"
+      const distMatch = String(distanceStr).trim().match(/^([\d.]+)\s*([a-zA-Z]+)?$/);
+      if (distMatch) {
+        document.getElementById('screen-dist-num').innerText = distMatch[1];
+        document.getElementById('screen-dist-unit').innerText = distMatch[2] || 'm';
+      } else {
+        document.getElementById('screen-dist-num').innerText = distanceStr;
+        document.getElementById('screen-dist-unit').innerText = '';
+      }
+
+      // Street name in uppercase
+      document.getElementById('screen-street-text').innerText = (streetName || "PARK AVENUE").toUpperCase();
+
+      // Top-left step indicator (e.g. "6")
+      const stepNum = (stepIndex !== null && stepIndex !== undefined) ? (stepIndex + 1) : 6;
+      document.getElementById('screen-step-number').innerText = stepNum;
+
+      // ETA string
+      let etaStr = customEta;
+      if (!etaStr) {
+        etaStr = calculateEtaString(state.navigation.totalDurationSeconds);
+      }
+      document.getElementById('screen-eta-text').innerText = etaStr;
     }
 
     // --- NOMINATIM DESTINATION SEARCH ---
@@ -1216,7 +1262,7 @@
 
     // --- MANUAL TURN SIMULATION ---
     function simulateTurn(iconId, distStr, street) {
-      updateScreenMirror(iconId, distStr, street);
+      updateScreenMirror(iconId, distStr, street, 5);
       const packet = `${iconId}|${distStr}|${street}`;
       sendBleData(packet);
       playTurnBeep(iconId === 4 ? 'arrived' : 'turn');
@@ -1523,7 +1569,7 @@
         logBle("iOS Safari detected. Open in Bluefy or WebBLE for Bluetooth.", "WARN");
       }
 
-      updateScreenMirror(0, "350m", "Main Express Highway");
+      updateScreenMirror(1, "350m", "PARK AVENUE", 5, "ETA 4:12 PM");
     });
 
   </script>
