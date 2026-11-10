@@ -1,0 +1,12 @@
+# OS files
+Thumbs.db
+.DS_Store
+
+# Vercel
+.vercel
+
+# Arduino build artifacts
+build/
+*.bin
+*.hex
+*.elf
