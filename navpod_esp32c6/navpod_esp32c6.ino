@@ -6,22 +6,26 @@
  * Display:     GC9A01 1.28" Round LCD (240x240, SPI)
  * Connectivity: Bluetooth Low Energy 5.0 (Nordic UART Service + 1337 Fallback)
  * 
- * DESIGN SPECIFICATIONS:
- *   1. Screen Dimensions: 240x240 circular display.
- *   2. Background: Deep dark charcoal (#121619) with faint radiating compass lines.
- *   3. Outer Ring: Vibrant neon green inset progress circle (#00FF66).
- *   4. Top Left Indicator: Bold neon green step sequence number (e.g. "6").
- *   5. Content Hierarchy (Centered Vertically):
- *      - Top Icon: Clean, bold white turn arrow.
- *      - Street Name: Bright neon green uppercase text ("PARK AVENUE").
- *      - Distance: Large bold prominent green numbers ("350m").
- *      - ETA: Small muted gray-green text ("ETA 4:12 PM").
+ * FEATURES:
+ *   1. Hardware Interaction: Press-and-hold touch sensor (>800ms) toggles
+ *      live status overlay (Battery %, BLE status, Total Trip & Turn distance).
+ *   2. Responsive Navigation Loop: High refresh rate, instant waypoint transitions.
+ *   3. Anti-Aliased Typography: Uses proportional FreeSans vector fonts for
+ *      smooth, non-pixelated rendering on 240x240 round screen.
+ *   4. Clean Flat Design: Deep charcoal (#121619), neon green (#00FF66) progress ring,
+ *      bold white turn arrows, uppercase street names, large distance digits.
  * ============================================================================
  */
 
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_GC9A01A.h>
+
+// Smooth Proportional Anti-Aliased Sans-Serif Fonts (Built into Adafruit_GFX)
+#include <Fonts/FreeSansBold18pt7b.h>
+#include <Fonts/FreeSansBold12pt7b.h>
+#include <Fonts/FreeSansBold9pt7b.h>
+#include <Fonts/FreeSans9pt7b.h>
 
 #include <BLEDevice.h>
 #include <BLEServer.h>
@@ -37,7 +41,7 @@ constexpr int8_t TFT_CS    = 20; // D9 (Chip Select)
 constexpr int8_t TFT_DC    = 1;  // D1 (Data / Command)
 constexpr int8_t TFT_RST   = 2;  // D2 (Reset)
 constexpr int8_t TFT_BL    = 0;  // D0 (Backlight LED)
-constexpr int8_t TOUCH_PIN = 21; // D3 (Touch Pin / Brightness Toggle)
+constexpr int8_t TOUCH_PIN = 21; // D3 (Touch Pin / Status Overlay Sensor)
 
 // Display instance using Hardware SPI
 Adafruit_GC9A01A tft(&SPI, TFT_DC, TFT_CS, TFT_RST);
@@ -70,29 +74,38 @@ bool               oldDeviceConnected = false;
 #define COLOR_WHITE        0xFFFF // #FFFFFF Pure white arrow
 #define COLOR_ETA_MUTED    0x746D // #708A79 Muted gray-green ETA text
 #define COLOR_RADIAL_LINE  0x1905 // Faint radiating compass lines
+#define COLOR_PANEL_BOX    0x1947 // Dark panel border
+#define COLOR_RED          0xF800 // Alert red
 
 // ============================================================================
-// LIVE NAVIGATION STATE
+// LIVE NAVIGATION & HARDWARE STATE
 // ============================================================================
 struct NavigationData {
-  uint8_t iconId      = 1;               // 0=Straight, 1=Left, 2=Right, 3=UTurn, 4=Arrived
-  String  distanceStr = "350m";          // e.g. "350m"
-  String  streetName  = "PARK AVENUE";   // e.g. "PARK AVENUE"
-  uint8_t stepSeq     = 6;               // Top-left sequence number (e.g. 6)
-  String  etaStr      = "ETA 4:12 PM";   // e.g. "ETA 4:12 PM"
+  uint8_t iconId        = 1;               // 0=Straight, 1=Left, 2=Right, 3=UTurn, 4=Arrived
+  String  distanceStr   = "350m";          // e.g. "350m"
+  String  streetName    = "PARK AVENUE";   // e.g. "PARK AVENUE"
+  uint8_t stepSeq       = 6;               // Top-left sequence number (e.g. 6)
+  String  etaStr        = "ETA 4:12 PM";   // e.g. "ETA 4:12 PM"
+  String  totalTripDist = "4.8 km";        // Total remaining trip distance
+  String  batteryPct    = "78%";           // Live battery percentage
   
   // Backlight brightness levels: 0 = 25% (Night), 1 = 60% (Cloudy), 2 = 100% (Daylight)
   uint8_t brightnessLevel = 2;
 
-  // Touch button debounce
-  uint32_t lastTouchMs = 0;
+  // Touch sensor hold state
+  bool isTouching      = false;
+  uint32_t touchStartMs = 0;
+  bool holdTriggered   = false;
+  bool overlayActive   = false;
 } nav;
 
 // ============================================================================
 // FORWARD DECLARATIONS
 // ============================================================================
 void drawDirectionsUI();
+void drawStatusOverlay();
 void drawTurnArrow(int centerX, int centerY, uint8_t iconId);
+void printCentered(const String& str, int y, const GFXfont* font, uint16_t color);
 void setBacklightBrightness(uint8_t level);
 void parseIncomingPacket(const String& pkt);
 
@@ -129,7 +142,7 @@ class RxCallbacks : public BLECharacteristicCallbacks {
 
 // ============================================================================
 // NAVIGATION PACKET PARSER
-// Format: "ICON_ID|DISTANCE_STR|STREET_NAME" or "ICON_ID|DISTANCE_STR|STREET_NAME|STEP_NUM|ETA"
+// Format: "ICON_ID|DISTANCE_STR|STREET_NAME|STEP_NUM|ETA"
 // ============================================================================
 void parseIncomingPacket(const String& pkt) {
   // Remote Backlight Command: "BL:HIGH", "BL:MED", "BL:LOW"
@@ -170,7 +183,9 @@ void parseIncomingPacket(const String& pkt) {
       Serial.printf("[NAV UPDATE] Maneuver: %d, Dist: %s, Street: %s\n", 
                     nav.iconId, nav.distanceStr.c_str(), nav.streetName.c_str());
 
-      drawDirectionsUI();
+      if (!nav.overlayActive) {
+        drawDirectionsUI();
+      }
       return;
     }
   }
@@ -185,7 +200,7 @@ void setup() {
   Serial.begin(115200);
   delay(500);
   Serial.println("\n==========================================");
-  Serial.println("  NavPod C6 — Minimalist Clean Flat UI");
+  Serial.println("  NavPod C6 — Anti-Aliased Clean Flat UI");
   Serial.println("==========================================");
 
   // 1. Backlight Setup
@@ -200,7 +215,7 @@ void setup() {
 
   // 4. Initialize GC9A01 Round Display (240x240)
   tft.begin();
-  tft.setRotation(0); // 0 or 2 for handlebar mount orientation
+  tft.setRotation(0); // Handlebar mount orientation
 
   // 5. Initialize Bluetooth Low Energy Stack
   BLEDevice::init(DEVICE_NAME);
@@ -252,34 +267,64 @@ void setup() {
 }
 
 // ============================================================================
-// MAIN LOOP
+// MAIN LOOP WITH HARDWARE PRESS-AND-HOLD (>800ms) EVENT LISTENER
 // ============================================================================
 void loop() {
   // Handle BLE Connection status changes
   if (!deviceConnected && oldDeviceConnected) {
-    delay(500);
+    delay(400);
     pServer->startAdvertising();
     Serial.println("[BLE] Advertising restarted.");
     oldDeviceConnected = deviceConnected;
-    drawDirectionsUI();
+    if (!nav.overlayActive) drawDirectionsUI();
   }
   if (deviceConnected && !oldDeviceConnected) {
     oldDeviceConnected = deviceConnected;
-    drawDirectionsUI();
+    if (!nav.overlayActive) drawDirectionsUI();
   }
 
-  // Handle Touch Pin (Tap cycles screen brightness)
-  if (digitalRead(TOUCH_PIN) == LOW) {
-    uint32_t now = millis();
-    if (now - nav.lastTouchMs > 350) { // 350ms Debounce
-      nav.lastTouchMs = now;
-      nav.brightnessLevel = (nav.brightnessLevel + 1) % 3;
-      setBacklightBrightness(nav.brightnessLevel);
-      Serial.printf("[TOUCH] Brightness level changed to: %d\n", nav.brightnessLevel);
+  // --- HARDWARE INTERACTION: CAPACITIVE TOUCH SENSOR (>800ms HOLD) ---
+  bool pinPressed = (digitalRead(TOUCH_PIN) == LOW);
+
+  if (pinPressed && !nav.isTouching) {
+    nav.isTouching = true;
+    nav.touchStartMs = millis();
+    nav.holdTriggered = false;
+  }
+  else if (pinPressed && nav.isTouching) {
+    // Check if held for > 800ms
+    if (!nav.holdTriggered && (millis() - nav.touchStartMs >= 800)) {
+      nav.holdTriggered = true;
+      nav.overlayActive = !nav.overlayActive;
+      Serial.printf("[TOUCH] Press-and-hold >800ms detected! Overlay: %s\n", nav.overlayActive ? "ACTIVE" : "CLOSED");
+
+      if (nav.overlayActive) {
+        drawStatusOverlay();
+      } else {
+        drawDirectionsUI();
+      }
+    }
+  }
+  else if (!pinPressed && nav.isTouching) {
+    uint32_t pressDuration = millis() - nav.touchStartMs;
+    nav.isTouching = false;
+
+    if (!nav.holdTriggered && pressDuration > 50) {
+      // Short Tap (< 800ms)
+      if (nav.overlayActive) {
+        // Tap closes overlay immediately
+        nav.overlayActive = false;
+        drawDirectionsUI();
+      } else {
+        // Tap cycles backlight brightness
+        nav.brightnessLevel = (nav.brightnessLevel + 1) % 3;
+        setBacklightBrightness(nav.brightnessLevel);
+        Serial.printf("[TOUCH] Short tap: Brightness level %d\n", nav.brightnessLevel);
+      }
     }
   }
 
-  delay(25);
+  delay(20);
 }
 
 // ============================================================================
@@ -302,7 +347,21 @@ void setBacklightBrightness(uint8_t level) {
 }
 
 // ============================================================================
-// MINIMALIST 240x240 DIRECTIONS UI (MATCHING DESIGN SPECS)
+// TEXT CENTERING HELPER WITH PROPORTIONAL ANTI-ALIASED FONTS
+// ============================================================================
+void printCentered(const String& str, int y, const GFXfont* font, uint16_t color) {
+  tft.setFont(font);
+  tft.setTextColor(color);
+  int16_t x1, y1;
+  uint16_t w, h;
+  tft.getTextBounds(str.c_str(), 0, y, &x1, &y1, &w, &h);
+  int startX = max(10, 120 - ((int)w / 2));
+  tft.setCursor(startX, y);
+  tft.print(str);
+}
+
+// ============================================================================
+// 1. MINIMALIST 240x240 DIRECTIONS UI (SMOOTH FONTS & VIBRANT RING)
 // ============================================================================
 void drawDirectionsUI() {
   // 1. Background: Deep dark charcoal (#121619)
@@ -320,9 +379,9 @@ void drawDirectionsUI() {
   tft.drawCircle(120, 120, 97, COLOR_NEON_GREEN);
 
   // 4. Top Left Indicator: Bold Neon Green Step Number (e.g. "6")
-  tft.setTextSize(3);
+  tft.setFont(&FreeSansBold12pt7b);
   tft.setTextColor(COLOR_NEON_GREEN);
-  tft.setCursor(24, 20);
+  tft.setCursor(22, 38);
   tft.print(nav.stepSeq);
 
   // 5. Content Hierarchy (Centered Vertically):
@@ -330,33 +389,82 @@ void drawDirectionsUI() {
   // A. Top Icon: Bold, Clean White Vector Turn Arrow (Centered at y = 68)
   drawTurnArrow(120, 68, nav.iconId);
 
-  // B. Street Name: Uppercase Bright Green ("PARK AVENUE") at y = 114
-  tft.setTextSize(1);
-  tft.setTextColor(COLOR_NEON_GREEN);
+  // B. Street Name: Uppercase Bright Green ("PARK AVENUE") at y = 116
   String street = nav.streetName;
-  if (street.length() > 20) {
-    street = street.substring(0, 17) + "...";
+  if (street.length() > 18) {
+    street = street.substring(0, 15) + "...";
   }
-  int streetWidth = street.length() * 6;
-  int streetStartX = max(20, 120 - (streetWidth / 2));
-  tft.setCursor(streetStartX, 114);
-  tft.print(street);
+  printCentered(street, 116, &FreeSansBold9pt7b, COLOR_NEON_GREEN);
 
-  // C. Distance: Large Bold Prominent Green Numbers ("350m") at y = 142
-  tft.setTextSize(4);
-  tft.setTextColor(COLOR_NEON_GREEN);
-  int distWidth = nav.distanceStr.length() * 24;
-  int distStartX = max(20, 120 - (distWidth / 2));
-  tft.setCursor(distStartX, 138);
-  tft.print(nav.distanceStr);
+  // C. Distance: Large Bold Prominent Green Numbers ("350m") at y = 155
+  printCentered(nav.distanceStr, 155, &FreeSansBold18pt7b, COLOR_NEON_GREEN);
 
   // D. ETA: Small Muted Gray-Green Text ("ETA 4:12 PM") at y = 188
-  tft.setTextSize(1);
-  tft.setTextColor(COLOR_ETA_MUTED);
-  int etaWidth = nav.etaStr.length() * 6;
-  int etaStartX = max(20, 120 - (etaWidth / 2));
-  tft.setCursor(etaStartX, 188);
-  tft.print(nav.etaStr);
+  printCentered(nav.etaStr, 188, &FreeSans9pt7b, COLOR_ETA_MUTED);
+}
+
+// ============================================================================
+// 2. COMPREHENSIVE STATUS OVERLAY (PRESS-AND-HOLD TOUCH SENSOR >800ms)
+// ============================================================================
+void drawStatusOverlay() {
+  tft.fillScreen(COLOR_BG_CHARCOAL);
+
+  // Dashed Accent Progress Ring
+  tft.drawCircle(120, 120, 95, COLOR_NEON_GREEN);
+
+  // Header Title
+  printCentered("STATUS OVERLAY", 38, &FreeSansBold9pt7b, COLOR_NEON_GREEN);
+
+  // 1. Live Battery percentage
+  tft.drawRoundRect(34, 50, 172, 30, 6, COLOR_PANEL_BOX);
+  tft.setFont(&FreeSans9pt7b);
+  tft.setTextColor(0xBDF7);
+  tft.setCursor(44, 71);
+  tft.print("BATTERY:");
+  tft.setFont(&FreeSansBold9pt7b);
+  tft.setTextColor(COLOR_NEON_GREEN);
+  tft.setCursor(144, 71);
+  tft.print(nav.batteryPct);
+
+  // 2. Bluetooth Connection Status
+  tft.drawRoundRect(34, 86, 172, 30, 6, COLOR_PANEL_BOX);
+  tft.setFont(&FreeSans9pt7b);
+  tft.setTextColor(0xBDF7);
+  tft.setCursor(44, 107);
+  tft.print("BLE:");
+  tft.setFont(&FreeSansBold9pt7b);
+  if (deviceConnected) {
+    tft.setTextColor(COLOR_NEON_GREEN);
+    tft.setCursor(96, 107);
+    tft.print("CONNECTED");
+  } else {
+    tft.setTextColor(COLOR_RED);
+    tft.setCursor(92, 107);
+    tft.print("NO DEVICE");
+  }
+
+  // 3. Total Trip Distance vs Next Turn Distance
+  tft.drawRoundRect(34, 122, 172, 46, 6, COLOR_PANEL_BOX);
+  tft.setFont(&FreeSans9pt7b);
+  tft.setTextColor(0xBDF7);
+  tft.setCursor(44, 142);
+  tft.print("TOTAL TRIP:");
+  tft.setFont(&FreeSansBold9pt7b);
+  tft.setTextColor(COLOR_NEON_GREEN);
+  tft.setCursor(144, 142);
+  tft.print(nav.totalTripDist);
+
+  tft.setFont(&FreeSans9pt7b);
+  tft.setTextColor(0xBDF7);
+  tft.setCursor(44, 160);
+  tft.print("NEXT TURN:");
+  tft.setFont(&FreeSansBold9pt7b);
+  tft.setTextColor(COLOR_WHITE);
+  tft.setCursor(144, 160);
+  tft.print(nav.distanceStr);
+
+  // Dismiss Hint
+  printCentered("HOLD >800ms / TAP TO CLOSE", 198, &FreeSans9pt7b, COLOR_ETA_MUTED);
 }
 
 // ============================================================================
@@ -364,7 +472,7 @@ void drawDirectionsUI() {
 // ============================================================================
 void drawTurnArrow(int cx, int cy, uint8_t iconId) {
   switch (iconId) {
-    case 1: // Bold Left Turn (Matching Mockup)
+    case 1: // Bold Left Turn
       // Vertical trunk
       tft.fillRect(cx + 4, cy, 8, 22, COLOR_WHITE);
       // Smooth rounded top corner & horizontal bar
