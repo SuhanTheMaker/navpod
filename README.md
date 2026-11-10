@@ -34,9 +34,10 @@ A web-based GPS navigation application and real-time simulator modeled after a *
   - Smoothly drives/rides a marker along the exact Google Maps polyline coordinates.
   - Decrements distance in real time, automatically advances maneuver steps when within **< 25m**, triggers audio chimes, and streams packets over Web Bluetooth.
 
-### D. Dual-Engine Fallback
-- If the Google Maps API key hits a quota or referrer restriction, the app includes an automatic fallback to the Open Source Routing Machine (OSRM).
-- In-app **⚙️ API Key Manager** allows inspecting or swapping keys on the fly.
+### D. Zero-Failure Dual-Engine Navigation Architecture
+- **Leaflet + OSRM Dark Map Engine**: Enabled by default for web deployments (e.g. Vercel) with zero API keys required, unrestricted CORS, CartoDB Dark Matter tiles, and instant Nominatim search.
+- **Google Maps JavaScript & Directions Engine**: Seamlessly switchable via the **⚙️ API / Engine** settings modal or header toggle button. If Google Maps encounters HTTP Referrer restrictions on your domain (`gm_authFailure`), the dashboard automatically and gracefully falls back to the Leaflet engine so the map never fails.
+- In-app **⚙️ API / Engine Manager** allows inspecting or swapping Google Maps keys and viewing domain setup steps on the fly.
 
 ---
 

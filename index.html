@@ -42,6 +42,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
+  <!-- Leaflet CSS & JS (100% Free, Zero Key Required, Works Everywhere on Web & Local) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
   <style>
     * {
       -webkit-font-smoothing: antialiased;
@@ -57,13 +61,18 @@
       overscroll-behavior-y: none;
     }
 
-    /* Custom Leaflet / Google Map Container */
-    #gmap-canvas {
+    /* Map Canvas Styles */
+    #map-mount-point {
       width: 100%;
       height: 100%;
-      min-height: 440px;
+      min-height: 460px;
       background-color: #121619;
       border-radius: 1rem;
+      z-index: 1;
+    }
+    .leaflet-container {
+      background-color: #121619 !important;
+      font-family: inherit;
     }
 
     /* Outer Progress Ring Animation */
@@ -76,6 +85,15 @@
     /* Glass glare overlay on smartwatch */
     .smartwatch-glass {
       background: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.02) 42%, rgba(0,0,0,0.5) 100%);
+    }
+
+    /* Custom Leaflet Marker Elements */
+    .pulse-ring {
+      animation: pulse-kf 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    }
+    @keyframes pulse-kf {
+      0% { transform: scale(0.6); opacity: 0.9; }
+      100% { transform: scale(2.2); opacity: 0; }
     }
 
     /* Custom scrollbars */
@@ -123,20 +141,29 @@
           <p class="text-[11px] text-zinc-400 flex items-center gap-1.5 font-mono">
             <span id="ble-status-label" class="text-rose-400 font-bold">DISCONNECTED</span>
             <span>&bull;</span>
-            <span id="active-routing-provider" class="text-zinc-500">Google Maps Routes</span>
+            <span id="active-routing-provider" class="text-[#00FF66] font-semibold">⚡ Dark Map &amp; OSRM</span>
           </p>
         </div>
       </div>
 
-      <!-- Quick Actions (API Key, Chime, Connect BLE) -->
+      <!-- Quick Actions (Engine Switcher, API Key, Chime, Connect BLE) -->
       <div class="flex items-center gap-2 flex-wrap">
         
+        <!-- Engine Quick Toggle -->
+        <button 
+          id="engine-toggle-btn"
+          onclick="toggleEngineQuick()" 
+          title="Switch Map Engine"
+          class="px-2.5 py-1.5 rounded-xl bg-[#161d22] border border-[#00FF66]/40 hover:border-[#00FF66] text-[#00FF66] text-xs font-semibold flex items-center gap-1.5 transition-colors">
+          <span id="engine-btn-label">🗺️ Leaflet Mode</span>
+        </button>
+
         <!-- Google Maps API Key Modal Trigger -->
         <button 
           onclick="toggleApiKeyModal()" 
-          title="Configure Google Maps API Key"
+          title="Configure Google Maps API Key or Referrer settings"
           class="px-2.5 py-1.5 rounded-xl bg-[#161d22] border border-[#1f2930] hover:border-[#00FF66]/50 text-zinc-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors">
-          <span>⚙️ API Key</span>
+          <span>⚙️ API / Engine</span>
         </button>
 
         <!-- Turn Chime Toggle -->
@@ -165,7 +192,7 @@
   </header>
 
   <!-- ============================================================ -->
-  <!-- GOOGLE MAPS API KEY CONFIG MODAL -->
+  <!-- GOOGLE MAPS & ENGINE CONFIG MODAL -->
   <!-- ============================================================ -->
   <div id="api-key-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-[#121619] border border-[#1f2930] rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
@@ -178,15 +205,27 @@
           </svg>
         </div>
         <div>
-          <h3 class="text-base font-bold text-white">Google Maps API Configuration</h3>
-          <p class="text-xs text-zinc-400">Routes &amp; Directions Service Credentials</p>
+          <h3 class="text-base font-bold text-white">Map &amp; Routing Engine Settings</h3>
+          <p class="text-xs text-zinc-400">Zero-failure dual navigation architecture</p>
         </div>
       </div>
 
       <div class="space-y-4 text-xs text-zinc-300">
-        <div>
+        <!-- Engine Selector -->
+        <div class="bg-[#161d22] p-3 rounded-xl border border-[#1f2930] space-y-2">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 font-mono">
+            Primary Routing Engine:
+          </label>
+          <select id="engine-select" onchange="onEngineSelectChange(this.value)" class="w-full bg-[#121619] border border-[#1f2930] text-[#00FF66] font-mono text-xs rounded-lg px-3 py-2 focus:outline-none">
+            <option value="leaflet">⚡ Leaflet + OSRM (100% Free, Reliable on Web &amp; Vercel)</option>
+            <option value="google">🌐 Google Maps JavaScript &amp; Routes API</option>
+          </select>
+        </div>
+
+        <!-- Google Key Input -->
+        <div id="google-key-group">
           <label class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5 font-mono">
-            Google Maps JavaScript API Key:
+            Google Maps API Key:
           </label>
           <input 
             id="custom-api-key-input" 
@@ -195,24 +234,27 @@
             placeholder="AIzaSy..." 
             class="w-full bg-[#161d22] border border-[#1f2930] focus:border-[#00FF66] rounded-xl px-3 py-2.5 text-xs text-white font-mono focus:outline-none"
           />
-          <p class="text-[11px] text-zinc-500 mt-1.5">
-            Key is stored in <code class="text-[#00FF66]">localStorage</code> on this device. If your key encounters HTTP referrer restrictions, you can toggle the dual-engine fallback anytime.
-          </p>
         </div>
 
-        <div class="bg-[#161d22] p-3 rounded-xl border border-[#1f2930] space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-white">Routing Engine Mode:</span>
-            <select id="engine-select" onchange="changeRoutingEngine(this.value)" class="bg-[#121619] border border-[#1f2930] text-[#00FF66] font-mono text-xs rounded-lg px-2.5 py-1 focus:outline-none">
-              <option value="google">Google Maps Routes API</option>
-              <option value="osrm">OSRM Open Source Engine (Backup)</option>
-            </select>
+        <!-- Why did Google Maps fail on Vercel explanation -->
+        <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 text-xs leading-relaxed space-y-1.5">
+          <div class="font-bold flex items-center gap-1.5 text-white">
+            <span class="text-[#00FF66]">💡</span> Why Leaflet is recommended for live web deployment:
           </div>
+          <p class="text-zinc-300">
+            Google Maps API keys block requests from unapproved domains (<code class="text-rose-400">RefererBlockedMapError</code>). When you host on Vercel, Google requires you to add your domain to the key's authorized HTTP referrers.
+          </p>
+          <p class="text-zinc-300">
+            <b>Leaflet + OSRM</b> requires no API key, has unrestricted CORS, loads instantly, and runs 100% seamlessly on both localhost and your live Vercel URL!
+          </p>
         </div>
       </div>
 
       <div class="mt-6 flex items-center justify-end gap-2">
-        <button onclick="saveAndReloadKey()" class="px-5 py-2.5 rounded-xl bg-[#00FF66] hover:bg-[#00e65c] text-black font-extrabold text-xs uppercase tracking-wider transition-all">
+        <button onclick="toggleApiKeyModal()" class="px-4 py-2 rounded-xl bg-[#161d22] border border-[#1f2930] text-zinc-400 hover:text-white text-xs font-semibold">
+          Close
+        </button>
+        <button onclick="saveAndApplySettings()" class="px-5 py-2.5 rounded-xl bg-[#00FF66] hover:bg-[#00e65c] text-black font-extrabold text-xs uppercase tracking-wider transition-all">
           Save &amp; Apply
         </button>
       </div>
@@ -225,7 +267,7 @@
   <main class="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-4 py-4 grid grid-cols-1 lg:grid-cols-12 gap-5">
 
     <!-- ============================================================ -->
-    <!-- LEFT PANEL: GOOGLE MAP VIEW & REAL-TIME ROUTE PLANNER -->
+    <!-- LEFT PANEL: MAP VIEW & REAL-TIME ROUTE PLANNER -->
     <!-- ============================================================ -->
     <section class="lg:col-span-7 flex flex-col gap-4">
 
@@ -236,7 +278,7 @@
             <input 
               id="dest-search-input" 
               type="text" 
-              placeholder="Enter destination (e.g., Central Park, Times Square...)" 
+              placeholder="Enter destination (e.g., Central Park, Times Square, Eiffel Tower...)" 
               class="w-full bg-[#121619] border border-[#1f2930] focus:border-[#00FF66] rounded-xl px-3 py-2.5 pl-9 text-xs sm:text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none font-sans"
               onkeydown="if(event.key==='Enter') executeRouteSearch()"
             />
@@ -262,16 +304,16 @@
           </div>
 
           <div class="flex items-center gap-1.5">
-            <button id="set-origin-btn" onclick="togglePinMode('start')" class="px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 hover:text-white text-[11px] font-medium">📍 Set Start</button>
-            <button id="set-dest-btn" onclick="togglePinMode('dest')" class="px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 hover:text-white text-[11px] font-medium">🏁 Set Dest</button>
+            <button id="set-origin-btn" onclick="togglePinMode('start')" class="px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 hover:text-white text-[11px] font-medium transition-colors">📍 Set Start</button>
+            <button id="set-dest-btn" onclick="togglePinMode('dest')" class="px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 hover:text-white text-[11px] font-medium transition-colors">🏁 Set Dest</button>
             <button onclick="clearCurrentRoute()" class="px-2 py-1 rounded-lg bg-rose-950/40 border border-rose-900/50 text-rose-300 hover:text-rose-200 text-[11px]">Clear</button>
           </div>
         </div>
       </div>
 
-      <!-- GOOGLE MAPS DESKTOP CANVAS -->
-      <div class="relative bg-[#161d22] border border-[#1f2930] rounded-2xl overflow-hidden shadow-2xl flex-1 min-h-[440px]">
-        <div id="gmap-canvas"></div>
+      <!-- DESKTOP MAP CANVAS CONTAINER -->
+      <div id="map-wrapper" class="relative bg-[#161d22] border border-[#1f2930] rounded-2xl overflow-hidden shadow-2xl flex-1 min-h-[460px]">
+        <div id="map-mount-point"></div>
 
         <!-- Floating Telemetry HUD (Speed, Remaining Distance, ETA) -->
         <div class="absolute top-3 left-3 z-10 flex flex-wrap gap-2 pointer-events-none">
@@ -309,7 +351,7 @@
         <!-- Tap instructions -->
         <div class="absolute bottom-4 left-4 z-10 pointer-events-none">
           <span class="bg-[#121619]/80 backdrop-blur-md border border-[#1f2930] text-zinc-300 text-[10px] px-2.5 py-1 rounded-full shadow">
-            Click map to set route destinations
+            Click map to place start or destination pins
           </span>
         </div>
       </div>
@@ -565,7 +607,7 @@
           <button onclick="clearConsoleLog()" class="text-[10px] text-zinc-400 hover:text-white underline">Clear</button>
         </div>
         <div id="ble-log-stream" class="bg-[#121619] border border-[#1f2930] rounded-xl p-2.5 font-mono text-[11px] text-zinc-400 h-28 overflow-y-auto space-y-1 select-text">
-          <div class="text-zinc-600">[System] NavPod Google Maps simulator initialized.</div>
+          <div class="text-zinc-600">[System] NavPod navigation cockpit initialized.</div>
         </div>
       </div>
 
@@ -580,7 +622,7 @@
     /**
      * ===============================================================
      * NAVPOD SMARTWATCH NAVIGATION ENGINE
-     * Google Maps Directions API + Live Route Simulator + Web BLE
+     * Dual Engine (Leaflet Dark / OSRM + Google Maps JS) + Simulator + BLE
      * ===============================================================
      */
 
@@ -594,23 +636,32 @@
     // Global State
     const appState = {
       apiKey: localStorage.getItem('google_maps_api_key') || CONFIG.defaultApiKey,
-      engine: localStorage.getItem('routing_engine_mode') || 'google',
+      // Default to Leaflet on live websites so it works 100% out of the box with zero key/referrer issues
+      engine: localStorage.getItem('routing_engine_mode') || 'leaflet',
       travelMode: 'BICYCLING', // 'BICYCLING', 'DRIVING', 'WALKING'
       pinMode: null, // 'start' or 'dest'
       
-      // Coordinates
-      origin: { lat: 40.785091, lng: -73.968285 }, // Default: Central Park, NY
-      destination: { lat: 40.758896, lng: -73.985130 }, // Times Square, NY
+      // Default Coordinates: Central Park to Times Square, NY
+      origin: { lat: 40.785091, lng: -73.968285 },
+      destination: { lat: 40.758896, lng: -73.985130 },
 
-      // Google Maps objects
-      map: null,
+      // Leaflet Objects
+      leafletMap: null,
+      leafletStartMarker: null,
+      leafletDestMarker: null,
+      leafletRiderMarker: null,
+      leafletPolyline: null,
+
+      // Google Maps Objects (if Google selected)
+      googleMap: null,
       directionsService: null,
       directionsRenderer: null,
-      originMarker: null,
-      destMarker: null,
-      riderMarker: null,
+      googleStartMarker: null,
+      googleDestMarker: null,
+      googleRiderMarker: null,
+      googleScriptLoaded: false,
 
-      // Navigation Route Steps & Path
+      // Route Steps & Path
       routePathCoordinates: [],
       steps: [],
       currentStepIndex: 0,
@@ -647,81 +698,180 @@
       audioChimeEnabled: false
     };
 
-    // --- GOOGLE MAPS DARK THEME JSON ---
+    // Google Maps Dark Theme Styles
     const GOOGLE_DARK_STYLES = [
       { elementType: "geometry", stylers: [{ color: "#161d22" }] },
       { elementType: "labels.text.stroke", stylers: [{ color: "#121619" }] },
       { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
-      {
-        featureType: "administrative.locality",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#d59563" }],
-      },
-      {
-        featureType: "poi",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#d59563" }],
-      },
-      {
-        featureType: "poi.park",
-        elementType: "geometry",
-        stylers: [{ color: "#1b2923" }],
-      },
-      {
-        featureType: "poi.park",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#6b9a76" }],
-      },
-      {
-        featureType: "road",
-        elementType: "geometry",
-        stylers: [{ color: "#25313a" }],
-      },
-      {
-        featureType: "road",
-        elementType: "geometry.stroke",
-        stylers: [{ color: "#1a2329" }],
-      },
-      {
-        featureType: "road",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#9ca5b3" }],
-      },
-      {
-        featureType: "road.highway",
-        elementType: "geometry",
-        stylers: [{ color: "#2d3d49" }],
-      },
-      {
-        featureType: "road.highway",
-        elementType: "geometry.stroke",
-        stylers: [{ color: "#1f2a32" }],
-      },
-      {
-        featureType: "road.highway",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#f3d19c" }],
-      },
-      {
-        featureType: "water",
-        elementType: "geometry",
-        stylers: [{ color: "#0c1216" }],
-      },
-      {
-        featureType: "water",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#515c6d" }],
-      },
-      {
-        featureType: "water",
-        elementType: "labels.text.stroke",
-        stylers: [{ color: "#17263c" }],
-      },
+      { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+      { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+      { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#1b2923" }] },
+      { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#6b9a76" }] },
+      { featureType: "road", elementType: "geometry", stylers: [{ color: "#25313a" }] },
+      { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#1a2329" }] },
+      { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
+      { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#2d3d49" }] },
+      { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2a32" }] },
+      { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#f3d19c" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: "#0c1216" }] },
+      { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] },
+      { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] }
     ];
 
     // ===============================================================
-    // 1. DYNAMIC GOOGLE MAPS API INJECTION & INIT
+    // 1. ENGINE INITIALIZATION & SWITCHING
     // ===============================================================
+
+    function initActiveEngine() {
+      // Clear mount point container
+      const mount = document.getElementById('map-mount-point');
+      mount.innerHTML = '';
+
+      if (appState.engine === 'google') {
+        initGoogleMapsEngine();
+      } else {
+        initLeafletEngine();
+      }
+      updateEngineHeaderUi();
+    }
+
+    function updateEngineHeaderUi() {
+      const label = document.getElementById('engine-btn-label');
+      const provider = document.getElementById('active-routing-provider');
+      const select = document.getElementById('engine-select');
+
+      if (appState.engine === 'google') {
+        label.innerText = "🌐 Google Mode";
+        provider.innerText = "Google Maps API";
+        provider.className = "text-cyan-400 font-semibold";
+        if (select) select.value = 'google';
+      } else {
+        label.innerText = "🗺️ Leaflet Mode";
+        provider.innerText = "⚡ Dark Map & OSRM (Active)";
+        provider.className = "text-[#00FF66] font-semibold";
+        if (select) select.value = 'leaflet';
+      }
+    }
+
+    function toggleEngineQuick() {
+      const newEngine = appState.engine === 'leaflet' ? 'google' : 'leaflet';
+      switchEngine(newEngine);
+    }
+
+    function onEngineSelectChange(val) {
+      switchEngine(val);
+    }
+
+    function switchEngine(targetEngine, isFailover = false) {
+      if (appState.sim.isPlaying) pauseRideSimulation();
+      appState.engine = targetEngine;
+      localStorage.setItem('routing_engine_mode', targetEngine);
+
+      if (isFailover) {
+        logToConsole("Switched to Leaflet & OSRM Engine (Zero Key Required).", "WARN");
+      } else {
+        logToConsole(`Switching engine to: ${targetEngine.toUpperCase()}`, "SYS");
+      }
+
+      initActiveEngine();
+    }
+
+    // ===============================================================
+    // 2. LEAFLET DARK MAP ENGINE (ZERO CONFIGURATION, WORKS EVERYWHERE)
+    // ===============================================================
+
+    function initLeafletEngine() {
+      logToConsole("Initializing Leaflet Dark Map Canvas...", "SYS");
+
+      const mount = document.getElementById('map-mount-point');
+      // Create fresh div for Leaflet
+      const leafletDiv = document.createElement('div');
+      leafletDiv.id = 'leaflet-canvas-element';
+      leafletDiv.style.width = '100%';
+      leafletDiv.style.height = '100%';
+      leafletDiv.style.minHeight = '460px';
+      leafletDiv.style.borderRadius = '1rem';
+      mount.appendChild(leafletDiv);
+
+      if (appState.leafletMap) {
+        try { appState.leafletMap.remove(); } catch(e){}
+        appState.leafletMap = null;
+      }
+
+      // Initialize Leaflet Map
+      appState.leafletMap = L.map('leaflet-canvas-element', {
+        zoomControl: false,
+        attributionControl: false
+      }).setView([appState.origin.lat, appState.origin.lng], 14);
+
+      // Add CartoDB Dark Matter tile layer (with subdomains & retina support)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 19
+      }).addTo(appState.leafletMap);
+
+      // Create Custom SVG Markers for Leaflet
+      createLeafletMarkers();
+
+      // Click event on Leaflet map
+      appState.leafletMap.on('click', (e) => {
+        handleGlobalMapClick(e.latlng.lat, e.latlng.lng);
+      });
+
+      // Calculate initial route via OSRM
+      calculateOsrmRoute();
+    }
+
+    function createLeafletMarkers() {
+      if (!appState.leafletMap) return;
+
+      // Start Marker Icon
+      const startHtml = `
+        <div style="position:relative;width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+          <div style="position:absolute;inset:0;background:#00FF66;border-radius:50%;opacity:0.3;" class="pulse-ring"></div>
+          <div style="width:18px;height:18px;background:#00FF66;border:3px solid #FFFFFF;border-radius:50%;box-shadow:0 0 14px #00FF66;"></div>
+        </div>`;
+      const startIcon = L.divIcon({ html: startHtml, className: 'leaflet-marker-clean', iconSize: [24, 24], iconAnchor: [12, 12] });
+      appState.leafletStartMarker = L.marker([appState.origin.lat, appState.origin.lng], { icon: startIcon, zIndexOffset: 50 }).addTo(appState.leafletMap);
+
+      // Destination Marker Icon
+      const destHtml = `
+        <div style="width:24px;height:24px;background:#FF3366;border:3px solid #FFFFFF;border-radius:50%;box-shadow:0 0 14px #FF3366;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:900;">
+          🏁
+        </div>`;
+      const destIcon = L.divIcon({ html: destHtml, className: 'leaflet-marker-clean', iconSize: [24, 24], iconAnchor: [12, 12] });
+      appState.leafletDestMarker = L.marker([appState.destination.lat, appState.destination.lng], { icon: destIcon, zIndexOffset: 60 }).addTo(appState.leafletMap);
+
+      // Live Rider Marker Icon
+      const riderHtml = `
+        <div style="position:relative;width:26px;height:26px;display:flex;align-items:center;justify-content:center;">
+          <div style="position:absolute;inset:0;background:#00E5FF;border-radius:50%;opacity:0.4;" class="pulse-ring"></div>
+          <div style="width:20px;height:20px;background:#00E5FF;border:3px solid #FFFFFF;border-radius:50%;box-shadow:0 0 16px #00E5FF;"></div>
+        </div>`;
+      const riderIcon = L.divIcon({ html: riderHtml, className: 'leaflet-marker-clean', iconSize: [26, 26], iconAnchor: [13, 13] });
+      appState.leafletRiderMarker = L.marker([appState.origin.lat, appState.origin.lng], { icon: riderIcon, zIndexOffset: 100 }).addTo(appState.leafletMap);
+    }
+
+    // ===============================================================
+    // 3. GOOGLE MAPS ENGINE (OPTIONAL WITH GRACEFUL FAILOVER)
+    // ===============================================================
+
+    function initGoogleMapsEngine() {
+      const mount = document.getElementById('map-mount-point');
+      const gmapDiv = document.createElement('div');
+      gmapDiv.id = 'gmap-canvas-element';
+      gmapDiv.style.width = '100%';
+      gmapDiv.style.height = '100%';
+      gmapDiv.style.minHeight = '460px';
+      gmapDiv.style.borderRadius = '1rem';
+      mount.appendChild(gmapDiv);
+
+      if (window.google && window.google.maps) {
+        setupGoogleMapCanvas();
+      } else {
+        loadGoogleMapsScript();
+      }
+    }
 
     function loadGoogleMapsScript() {
       const existing = document.getElementById('gmaps-script');
@@ -729,30 +879,26 @@
 
       const script = document.createElement('script');
       script.id = 'gmaps-script';
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${appState.apiKey}&libraries=places,geometry&callback=initGoogleMapsApp`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${appState.apiKey}&libraries=places,geometry&callback=setupGoogleMapCanvas`;
       script.async = true;
       script.defer = true;
       script.onerror = () => {
-        logToConsole("Google Maps script failed to load. Check API Key or Network.", "ERR");
-        showFallbackPrompt();
+        logToConsole("Google Maps script failed to load. Auto-falling back to Leaflet.", "WARN");
+        switchEngine('leaflet', true);
       };
       window.gm_authFailure = () => {
-        logToConsole("Google Maps Authentication Failed (Invalid key or referrer block).", "ERR");
-        showFallbackPrompt();
+        logToConsole("Google Maps Key Auth Failed (HTTP Referrer blocked on this domain). Auto-switching to Leaflet.", "ERR");
+        switchEngine('leaflet', true);
       };
       document.head.appendChild(script);
     }
 
-    function showFallbackPrompt() {
-      document.getElementById('active-routing-provider').innerText = "OSRM Fallback Active";
-      appState.engine = 'osrm';
-    }
+    window.setupGoogleMapCanvas = function() {
+      logToConsole("Google Maps JavaScript API loaded.", "SYS");
+      const canvas = document.getElementById('gmap-canvas-element');
+      if (!canvas) return;
 
-    window.initGoogleMapsApp = function() {
-      logToConsole("Google Maps JavaScript API loaded successfully.", "SYS");
-
-      const canvas = document.getElementById('gmap-canvas');
-      appState.map = new google.maps.Map(canvas, {
+      appState.googleMap = new google.maps.Map(canvas, {
         center: appState.origin,
         zoom: 14,
         styles: GOOGLE_DARK_STYLES,
@@ -762,7 +908,7 @@
 
       appState.directionsService = new google.maps.DirectionsService();
       appState.directionsRenderer = new google.maps.DirectionsRenderer({
-        map: appState.map,
+        map: appState.googleMap,
         suppressMarkers: true,
         polylineOptions: {
           strokeColor: '#00FF66',
@@ -771,24 +917,10 @@
         }
       });
 
-      // Markers
-      initMarkers();
-
-      // Click on map to set start or destination
-      appState.map.addListener('click', (e) => {
-        handleMapClick(e.latLng);
-      });
-
-      // Calculate initial demo route
-      calculateGoogleRoute();
-    };
-
-    function initMarkers() {
-      // Start Marker (Neon green circle)
-      appState.originMarker = new google.maps.Marker({
+      // Google Markers
+      appState.googleStartMarker = new google.maps.Marker({
         position: appState.origin,
-        map: appState.map,
-        title: "Start Location",
+        map: appState.googleMap,
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 9,
@@ -799,11 +931,9 @@
         }
       });
 
-      // Destination Marker (Checkered / Flag pin)
-      appState.destMarker = new google.maps.Marker({
+      appState.googleDestMarker = new google.maps.Marker({
         position: appState.destination,
-        map: appState.map,
-        title: "Destination",
+        map: appState.googleMap,
         icon: {
           path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
           scale: 6,
@@ -814,11 +944,9 @@
         }
       });
 
-      // Live Rider / Simulated Position Marker
-      appState.riderMarker = new google.maps.Marker({
+      appState.googleRiderMarker = new google.maps.Marker({
         position: appState.origin,
-        map: appState.map,
-        title: "Live GPS Location",
+        map: appState.googleMap,
         zIndex: 999,
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
@@ -829,21 +957,119 @@
           strokeWeight: 3,
         }
       });
+
+      // Click listener
+      appState.googleMap.addListener('click', (e) => {
+        handleGlobalMapClick(e.latLng.lat(), e.latLng.lng());
+      });
+
+      calculateGoogleRoute();
+    };
+
+    // ===============================================================
+    // 4. UNIFIED ROUTING (OSRM & GOOGLE MAPS)
+    // ===============================================================
+
+    function calculateActiveRoute() {
+      if (appState.engine === 'google' && window.google && window.google.maps && appState.directionsService) {
+        calculateGoogleRoute();
+      } else {
+        calculateOsrmRoute();
+      }
     }
 
-    // ===============================================================
-    // 2. GOOGLE MAPS DIRECTIONS ROUTING ENGINE
-    // ===============================================================
+    // --- OSRM ROUTE CALCULATION ---
+    async function calculateOsrmRoute() {
+      logToConsole("Requesting OSRM Turn-by-Turn Route...", "SYS");
 
-    function calculateGoogleRoute() {
-      if (!appState.directionsService) {
-        // Fallback to OSRM if Google Maps service isn't ready
-        calculateOsrmFallbackRoute();
-        return;
+      // Mode mapping for OSRM public server:
+      let profile = 'biking';
+      if (appState.travelMode === 'DRIVING') profile = 'driving';
+      if (appState.travelMode === 'WALKING') profile = 'foot';
+
+      const url = `https://router.project-osrm.org/route/v1/${profile}/${appState.origin.lng},${appState.origin.lat};${appState.destination.lng},${appState.destination.lat}?overview=full&geometries=geojson&steps=true`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`OSRM HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data.routes || data.routes.length === 0) throw new Error("No route found between coordinates");
+
+        const route = data.routes[0];
+        const leg = route.legs[0];
+
+        appState.totalDistanceMeters = route.distance;
+        appState.totalDurationSeconds = route.duration;
+        document.getElementById('hud-total-dist').innerText = formatMeters(route.distance);
+        document.getElementById('hud-total-eta').innerText = calculateEtaString(route.duration);
+
+        // Coordinates array
+        appState.routePathCoordinates = route.geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
+
+        // Draw Polyline on Leaflet
+        if (appState.leafletMap) {
+          if (appState.leafletPolyline) {
+            appState.leafletPolyline.remove();
+          }
+          const latLngs = appState.routePathCoordinates.map(p => [p.lat, p.lng]);
+          appState.leafletPolyline = L.polyline(latLngs, {
+            color: '#00FF66',
+            weight: 6,
+            opacity: 0.9,
+            lineJoin: 'round',
+            lineCap: 'round'
+          }).addTo(appState.leafletMap);
+
+          appState.leafletMap.fitBounds(appState.leafletPolyline.getBounds(), { padding: [40, 40] });
+        }
+
+        // Parse Turn-by-Turn Steps
+        appState.steps = leg.steps.map((step, idx) => {
+          const maneuver = step.maneuver || {};
+          const modifier = (maneuver.modifier || '').toLowerCase();
+          const type = (maneuver.type || '').toLowerCase();
+          let iconId = 0; // straight
+
+          if (idx === leg.steps.length - 1 || type === 'arrive') {
+            iconId = 4; // arrive
+          } else if (modifier.includes('uturn') || type.includes('uturn')) {
+            iconId = 3; // uturn
+          } else if (modifier.includes('left')) {
+            iconId = 1; // turn left
+          } else if (modifier.includes('right')) {
+            iconId = 2; // turn right
+          }
+
+          let street = step.name ? step.name.trim() : '';
+          if (!street || street.length === 0) {
+            street = idx === leg.steps.length - 1 ? 'DESTINATION' : 'PARK AVENUE';
+          }
+
+          return {
+            index: idx,
+            distanceMeters: step.distance,
+            distanceText: formatMeters(step.distance),
+            streetName: street,
+            iconId: iconId,
+            startLocation: { lat: maneuver.location[1], lng: maneuver.location[0] }
+          };
+        });
+
+        appState.currentStepIndex = 0;
+        updateActiveStepDisplay();
+        transmitCurrentBlePacket(true);
+        logToConsole("Route calculated successfully with OSRM.", "SYS");
+
+      } catch (err) {
+        logToConsole(`OSRM Routing error: ${err.message}`, "ERR");
       }
+    }
+
+    // --- GOOGLE DIRECTIONS CALCULATION ---
+    function calculateGoogleRoute() {
+      if (!appState.directionsService) return;
 
       logToConsole("Requesting Google Maps Directions...", "SYS");
-
       const request = {
         origin: appState.origin,
         destination: appState.destination,
@@ -856,8 +1082,8 @@
           parseGoogleRouteResult(result.routes[0]);
           logToConsole("Google Maps route calculated successfully.", "SYS");
         } else {
-          logToConsole(`Google Directions failed (${status}). Using OSRM fallback...`, "WARN");
-          calculateOsrmFallbackRoute();
+          logToConsole(`Google Directions failed (${status}). Switching to Leaflet & OSRM...`, "WARN");
+          switchEngine('leaflet', true);
         }
       });
     }
@@ -867,18 +1093,14 @@
       appState.totalDistanceMeters = leg.distance.value;
       appState.totalDurationSeconds = leg.duration.value;
 
-      // Telemetry HUD updates
       document.getElementById('hud-total-dist').innerText = leg.distance.text;
-      const etaFormatted = calculateEtaString(leg.duration.value);
-      document.getElementById('hud-total-eta').innerText = etaFormatted;
+      document.getElementById('hud-total-eta').innerText = calculateEtaString(leg.duration.value);
 
-      // Extract full polyline coordinates for smooth simulation
       appState.routePathCoordinates = [];
       route.overview_path.forEach(pt => {
         appState.routePathCoordinates.push({ lat: pt.lat(), lng: pt.lng() });
       });
 
-      // Parse Steps
       appState.steps = leg.steps.map((step, idx) => {
         const maneuver = step.maneuver || '';
         const cleanInstruction = stripHtml(step.instructions);
@@ -890,7 +1112,6 @@
           streetName: cleanInstruction,
           iconId: iconId,
           startLocation: { lat: step.start_location.lat(), lng: step.start_location.lng() },
-          endLocation: { lat: step.end_location.lat(), lng: step.end_location.lng() },
         };
       });
 
@@ -913,7 +1134,6 @@
       const tmp = document.createElement("DIV");
       tmp.innerHTML = html;
       let text = tmp.textContent || tmp.innerText || "";
-      // Strip common prefixes
       text = text.replace(/Head (north|south|east|west) on/i, '')
                  .replace(/Turn (left|right) onto/i, '')
                  .replace(/Continue onto/i, '')
@@ -921,53 +1141,8 @@
       return text.length > 0 ? text : "Park Avenue";
     }
 
-    // --- OSRM FALLBACK ROUTING ---
-    async function calculateOsrmFallbackRoute() {
-      const url = `https://router.project-osrm.org/route/v1/biking/${appState.origin.lng},${appState.origin.lat};${appState.destination.lng},${appState.destination.lat}?overview=full&geometries=geojson&steps=true`;
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        if (!data.routes || data.routes.length === 0) return;
-        const route = data.routes[0];
-        const leg = route.legs[0];
-
-        appState.totalDistanceMeters = route.distance;
-        appState.totalDurationSeconds = route.duration;
-        document.getElementById('hud-total-dist').innerText = formatMeters(route.distance);
-        document.getElementById('hud-total-eta').innerText = calculateEtaString(route.duration);
-
-        // Coordinates
-        appState.routePathCoordinates = route.geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
-
-        appState.steps = leg.steps.map((step, idx) => {
-          let iconId = 0;
-          const mod = (step.maneuver && step.maneuver.modifier) ? step.maneuver.modifier.toLowerCase() : '';
-          if (idx === leg.steps.length - 1) iconId = 4;
-          else if (mod.includes('left')) iconId = 1;
-          else if (mod.includes('right')) iconId = 2;
-          else if (mod.includes('uturn')) iconId = 3;
-
-          return {
-            index: idx,
-            distanceMeters: step.distance,
-            distanceText: formatMeters(step.distance),
-            streetName: step.name || "Main Avenue",
-            iconId: iconId,
-            startLocation: { lat: step.maneuver.location[1], lng: step.maneuver.location[0] },
-          };
-        });
-
-        appState.currentStepIndex = 0;
-        updateActiveStepDisplay();
-        transmitCurrentBlePacket(true);
-        logToConsole("OSRM Fallback Route computed successfully.", "SYS");
-      } catch (e) {
-        logToConsole("Fallback routing failed: " + e.message, "ERR");
-      }
-    }
-
     // ===============================================================
-    // 3. 240x240 SMARTWATCH SHELL & DYNAMIC PROGRESS RING
+    // 5. 240x240 SMARTWATCH SHELL & DYNAMIC PROGRESS RING
     // ===============================================================
 
     function updateActiveStepDisplay() {
@@ -1038,12 +1213,11 @@
     }
 
     // ===============================================================
-    // 4. PRESS & HOLD (>800MS) TOUCH SENSOR SIMULATOR
+    // 6. PRESS & HOLD (>800MS) TOUCH SENSOR SIMULATOR
     // ===============================================================
 
     function handleWatchTouchStart() {
       if (appState.touch.isOverlayOpen) {
-        // Quick tap closes overlay
         toggleWatchStatusOverlay(false);
         return;
       }
@@ -1052,7 +1226,6 @@
       const progressBar = document.getElementById('touch-hold-progress');
       progressBar.style.width = '0%';
 
-      // Animate progress bar across 800ms
       const start = Date.now();
       function animateBar() {
         const elapsed = Date.now() - start;
@@ -1064,7 +1237,6 @@
       }
       appState.touch.animFrameId = requestAnimationFrame(animateBar);
 
-      // Trigger after 800ms
       appState.touch.timerId = setTimeout(() => {
         toggleWatchStatusOverlay(true);
         progressBar.style.width = '100%';
@@ -1102,7 +1274,7 @@
     }
 
     // ===============================================================
-    // 5. REAL-TIME NAVIGATION RIDE SIMULATOR
+    // 7. REAL-TIME NAVIGATION RIDE SIMULATOR
     // ===============================================================
 
     function toggleRideSimulation() {
@@ -1123,7 +1295,7 @@
       document.getElementById('sim-play-icon').innerHTML = `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`;
       document.getElementById('sim-play-label').innerText = "Pause Simulation";
 
-      logToConsole("Navigation Simulator Started along Google Maps route.", "SYS");
+      logToConsole("Navigation Simulator Started.", "SYS");
 
       const tickRateMs = Math.round(1000 / appState.sim.speedMultiplier);
 
@@ -1142,10 +1314,8 @@
         appState.sim.currentIndex++;
         const currentCoord = appState.routePathCoordinates[appState.sim.currentIndex];
 
-        // Move marker on Google Map
-        if (appState.riderMarker) {
-          appState.riderMarker.setPosition(currentCoord);
-        }
+        // Move marker on active map engine
+        updateRiderMarkerPosition(currentCoord);
 
         // Speed calculation
         appState.sim.speedKmh = 19.5 + (Math.sin(appState.sim.currentIndex) * 3);
@@ -1171,8 +1341,8 @@
       pauseRideSimulation();
       appState.sim.currentIndex = 0;
       appState.currentStepIndex = 0;
-      if (appState.riderMarker && appState.routePathCoordinates[0]) {
-        appState.riderMarker.setPosition(appState.routePathCoordinates[0]);
+      if (appState.routePathCoordinates[0]) {
+        updateRiderMarkerPosition(appState.routePathCoordinates[0]);
       }
       document.getElementById('sim-play-label').innerText = "Start Ride Simulation";
       updateActiveStepDisplay();
@@ -1197,6 +1367,14 @@
       }
     }
 
+    function updateRiderMarkerPosition(coord) {
+      if (appState.engine === 'leaflet' && appState.leafletRiderMarker) {
+        appState.leafletRiderMarker.setLatLng([coord.lat, coord.lng]);
+      } else if (appState.googleRiderMarker) {
+        appState.googleRiderMarker.setPosition(coord);
+      }
+    }
+
     function checkWaypointProgress(currentCoord) {
       if (!appState.steps || appState.steps.length === 0) return;
       const step = appState.steps[appState.currentStepIndex];
@@ -1205,21 +1383,19 @@
       const targetLoc = step.startLocation;
       const distRemaining = haversineMeters(currentCoord.lat, currentCoord.lng, targetLoc.lat, targetLoc.lng);
 
-      // Total trip completion progress
       const progressFraction = Math.min(1, appState.sim.currentIndex / appState.routePathCoordinates.length);
 
-      // Instant state transition when within < 25 meters of maneuver point
+      // Instant transition within 25 meters
       if (distRemaining < 25 && appState.currentStepIndex < appState.steps.length - 1) {
         appState.currentStepIndex++;
         const nextStep = appState.steps[appState.currentStepIndex];
-        logToConsole(`Waypoint Reached! Advancing to: ${nextStep.streetName}`, "SYS");
+        logToConsole(`Waypoint reached: ${nextStep.streetName}`, "SYS");
         playTurnChime(nextStep.iconId === 4 ? 'arrived' : 'turn');
         updateActiveStepDisplay();
         transmitCurrentBlePacket(true);
         return;
       }
 
-      // Stream continuous decrementing distance
       const formattedDist = formatMeters(distRemaining);
       updateWatchDisplay(
         step.iconId,
@@ -1230,12 +1406,161 @@
         progressFraction
       );
 
-      // Stream to BLE every 500ms
       throttledBleSend(step.iconId, formattedDist, step.streetName, appState.currentStepIndex);
     }
 
     // ===============================================================
-    // 6. WEB BLUETOOTH (NUS) TRANSMISSION
+    // 8. MAP INTERACTION & MARKER UPDATES
+    // ===============================================================
+
+    function handleGlobalMapClick(lat, lng) {
+      const pos = { lat, lng };
+
+      if (appState.pinMode === 'start') {
+        appState.origin = pos;
+        updateStartMarkerPos(pos);
+        appState.pinMode = null;
+        resetPinButtons();
+        calculateActiveRoute();
+      } else {
+        appState.destination = pos;
+        updateDestMarkerPos(pos);
+        appState.pinMode = null;
+        resetPinButtons();
+        calculateActiveRoute();
+      }
+    }
+
+    function updateStartMarkerPos(pos) {
+      if (appState.engine === 'leaflet' && appState.leafletStartMarker) {
+        appState.leafletStartMarker.setLatLng([pos.lat, pos.lng]);
+        if (appState.leafletRiderMarker) appState.leafletRiderMarker.setLatLng([pos.lat, pos.lng]);
+      } else if (appState.googleStartMarker) {
+        appState.googleStartMarker.setPosition(pos);
+        if (appState.googleRiderMarker) appState.googleRiderMarker.setPosition(pos);
+      }
+    }
+
+    function updateDestMarkerPos(pos) {
+      if (appState.engine === 'leaflet' && appState.leafletDestMarker) {
+        appState.leafletDestMarker.setLatLng([pos.lat, pos.lng]);
+      } else if (appState.googleDestMarker) {
+        appState.googleDestMarker.setPosition(pos);
+      }
+    }
+
+    function togglePinMode(mode) {
+      appState.pinMode = (appState.pinMode === mode) ? null : mode;
+      const startBtn = document.getElementById('set-origin-btn');
+      const destBtn = document.getElementById('set-dest-btn');
+
+      if (appState.pinMode === 'start') {
+        startBtn.className = "px-2.5 py-1 rounded-lg bg-[#00FF66]/20 border border-[#00FF66] text-[#00FF66] text-[11px] font-bold";
+        destBtn.className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
+      } else if (appState.pinMode === 'dest') {
+        destBtn.className = "px-2.5 py-1 rounded-lg bg-rose-500/20 border border-rose-500 text-rose-400 text-[11px] font-bold";
+        startBtn.className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
+      } else {
+        resetPinButtons();
+      }
+    }
+
+    function resetPinButtons() {
+      const startBtn = document.getElementById('set-origin-btn');
+      const destBtn = document.getElementById('set-dest-btn');
+      if (startBtn) startBtn.className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
+      if (destBtn) destBtn.className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
+    }
+
+    function setTravelMode(mode) {
+      appState.travelMode = mode;
+      ['BICYCLING', 'DRIVING', 'WALKING'].forEach(m => {
+        const id = `mode-${m.toLowerCase()}`;
+        const btn = document.getElementById(id);
+        if (btn) {
+          if (m === mode) btn.className = "px-2.5 py-1 rounded-lg bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]/40 font-bold text-[11px]";
+          else btn.className = "px-2.5 py-1 rounded-lg bg-[#121619] text-zinc-400 border border-[#1f2930] text-[11px] hover:text-white";
+        }
+      });
+      calculateActiveRoute();
+    }
+
+    async function executeRouteSearch() {
+      const input = document.getElementById('dest-search-input');
+      const query = input.value.trim();
+      if (!query) return;
+
+      logToConsole(`Searching location for "${query}"...`, "SYS");
+
+      // Try OpenStreetMap Nominatim first (100% free, works everywhere without API key)
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lng = parseFloat(data[0].lon);
+          logToConsole(`Found: ${data[0].display_name.split(',')[0]}`, "SYS");
+          appState.destination = { lat, lng };
+          updateDestMarkerPos({ lat, lng });
+          if (appState.engine === 'leaflet' && appState.leafletMap) {
+            appState.leafletMap.panTo([lat, lng]);
+          } else if (appState.googleMap) {
+            appState.googleMap.panTo({ lat, lng });
+          }
+          calculateActiveRoute();
+          return;
+        }
+      } catch (err) {
+        console.warn("Nominatim search failed, trying Google Geocoder fallback...", err);
+      }
+
+      // Google Geocoder fallback if available
+      if (window.google && google.maps && google.maps.Geocoder) {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: query }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            const loc = results[0].geometry.location;
+            const pos = { lat: loc.lat(), lng: loc.lng() };
+            appState.destination = pos;
+            updateDestMarkerPos(pos);
+            calculateActiveRoute();
+          } else {
+            alert("Location not found. Please try another query.");
+          }
+        });
+      }
+    }
+
+    function centerMapOnCurrentPosition() {
+      if (appState.engine === 'leaflet' && appState.leafletMap) {
+        appState.leafletMap.panTo([appState.origin.lat, appState.origin.lng]);
+      } else if (appState.googleMap) {
+        appState.googleMap.panTo(appState.origin);
+      }
+    }
+
+    function clearCurrentRoute() {
+      resetRideSimulation();
+      appState.steps = [];
+      appState.routePathCoordinates = [];
+
+      if (appState.engine === 'leaflet' && appState.leafletPolyline) {
+        appState.leafletPolyline.remove();
+        appState.leafletPolyline = null;
+      }
+      if (appState.directionsRenderer) {
+        appState.directionsRenderer.set('directions', null);
+      }
+
+      updateWatchDisplay(0, "---", "READY TO RIDE", 0, "ETA --:--", 0);
+      document.getElementById('hud-total-dist').innerText = "--";
+      document.getElementById('hud-total-eta').innerText = "--";
+      logToConsole("Route cleared.", "SYS");
+    }
+
+    // ===============================================================
+    // 9. WEB BLUETOOTH (NUS) TRANSMISSION
     // ===============================================================
 
     async function handleBleConnection() {
@@ -1248,7 +1573,7 @@
 
     async function connectBle() {
       if (!navigator.bluetooth) {
-        alert("Web Bluetooth is not supported on this browser. On iOS, use Bluefy or WebBLE.");
+        alert("Web Bluetooth is not supported on this browser. On mobile iOS, use Bluefy or WebBLE.");
         return;
       }
 
@@ -1272,7 +1597,6 @@
         updateBleUiState(true);
         logToConsole("BLE Nordic UART Service Connected!", "BLE");
 
-        // Initial handshake packet
         transmitCurrentBlePacket(true);
 
       } catch (err) {
@@ -1369,100 +1693,7 @@
     }
 
     // ===============================================================
-    // 7. MAP INTERACTION HELPERS
-    // ===============================================================
-
-    function handleMapClick(latLng) {
-      const pos = { lat: latLng.lat(), lng: latLng.lng() };
-
-      if (appState.pinMode === 'start') {
-        appState.origin = pos;
-        if (appState.originMarker) appState.originMarker.setPosition(pos);
-        appState.pinMode = null;
-        document.getElementById('set-origin-btn').className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
-        calculateGoogleRoute();
-      } else {
-        // Default click sets destination
-        appState.destination = pos;
-        if (appState.destMarker) appState.destMarker.setPosition(pos);
-        appState.pinMode = null;
-        document.getElementById('set-dest-btn').className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
-        calculateGoogleRoute();
-      }
-    }
-
-    function togglePinMode(mode) {
-      appState.pinMode = (appState.pinMode === mode) ? null : mode;
-      const startBtn = document.getElementById('set-origin-btn');
-      const destBtn = document.getElementById('set-dest-btn');
-
-      if (appState.pinMode === 'start') {
-        startBtn.className = "px-2.5 py-1 rounded-lg bg-[#00FF66]/20 border border-[#00FF66] text-[#00FF66] text-[11px] font-bold";
-        destBtn.className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
-      } else if (appState.pinMode === 'dest') {
-        destBtn.className = "px-2.5 py-1 rounded-lg bg-rose-500/20 border border-rose-500 text-rose-400 text-[11px] font-bold";
-        startBtn.className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
-      } else {
-        startBtn.className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
-        destBtn.className = "px-2.5 py-1 rounded-lg bg-[#121619] border border-[#1f2930] text-zinc-300 text-[11px]";
-      }
-    }
-
-    function setTravelMode(mode) {
-      appState.travelMode = mode;
-      ['BICYCLING', 'DRIVING', 'WALKING'].forEach(m => {
-        const id = `mode-${m.toLowerCase()}`;
-        const btn = document.getElementById(id);
-        if (btn) {
-          if (m === mode) btn.className = "px-2.5 py-1 rounded-lg bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]/40 font-bold text-[11px]";
-          else btn.className = "px-2.5 py-1 rounded-lg bg-[#121619] text-zinc-400 border border-[#1f2930] text-[11px] hover:text-white";
-        }
-      });
-      calculateGoogleRoute();
-    }
-
-    function executeRouteSearch() {
-      const input = document.getElementById('dest-search-input');
-      const query = input.value.trim();
-      if (!query) return;
-
-      if (google && google.maps && google.maps.Geocoder) {
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ address: query }, (results, status) => {
-          if (status === 'OK' && results[0]) {
-            const loc = results[0].geometry.location;
-            appState.destination = { lat: loc.lat(), lng: loc.lng() };
-            if (appState.destMarker) appState.destMarker.setPosition(loc);
-            if (appState.map) appState.map.panTo(loc);
-            calculateGoogleRoute();
-          } else {
-            alert("Location not found. Please try another query.");
-          }
-        });
-      }
-    }
-
-    function centerMapOnCurrentPosition() {
-      if (appState.map && appState.origin) {
-        appState.map.panTo(appState.origin);
-      }
-    }
-
-    function clearCurrentRoute() {
-      resetRideSimulation();
-      appState.steps = [];
-      appState.routePathCoordinates = [];
-      if (appState.directionsRenderer) {
-        appState.directionsRenderer.set('directions', null);
-      }
-      updateWatchDisplay(0, "---", "READY TO RIDE", 0, "ETA --:--", 0);
-      document.getElementById('hud-total-dist').innerText = "--";
-      document.getElementById('hud-total-eta').innerText = "--";
-      logToConsole("Route cleared.", "SYS");
-    }
-
-    // ===============================================================
-    // 8. AUDIO TURN CHIME & GENERAL UTILITIES
+    // 10. AUDIO TURN CHIME & GENERAL UTILITIES
     // ===============================================================
 
     let audioContext = null;
@@ -1516,23 +1747,17 @@
       modal.classList.toggle('hidden');
     }
 
-    function saveAndReloadKey() {
+    function saveAndApplySettings() {
       const input = document.getElementById('custom-api-key-input');
       const key = input.value.trim();
       if (key) {
         appState.apiKey = key;
         localStorage.setItem('google_maps_api_key', key);
-        toggleApiKeyModal();
-        loadGoogleMapsScript();
       }
-    }
-
-    function changeRoutingEngine(engine) {
-      appState.engine = engine;
-      localStorage.setItem('routing_engine_mode', engine);
-      document.getElementById('active-routing-provider').innerText = 
-        engine === 'google' ? 'Google Maps Routes' : 'OSRM Open Source';
-      calculateGoogleRoute();
+      const engineSelect = document.getElementById('engine-select');
+      const chosenEngine = engineSelect.value;
+      toggleApiKeyModal();
+      switchEngine(chosenEngine);
     }
 
     function calculateEtaString(durationSeconds) {
@@ -1594,8 +1819,8 @@
       // 1. Initial 240x240 Watch Display (Matches Design Mockup)
       updateWatchDisplay(1, "350m", "PARK AVENUE", 5, "ETA 4:12 PM", 0.42);
 
-      // 2. Load Google Maps Script with API Key
-      loadGoogleMapsScript();
+      // 2. Initialize Active Map Engine
+      initActiveEngine();
     });
 
   </script>
